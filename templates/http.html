@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs HTTP | SQL Shield</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/sql.css"> 
+    <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
+</head>
+
+<body>
+    <nav class="sidebar">
+        <header>
+            <div class="image-text">
+                <span class="image">
+                    <img src="/static/images/logo.png" alt="Logo SQL Shield">
+                </span>
+                <div class="text logo-text">
+                    <span class="name">SQL App</span>
+                    <span class="profession">Analyser</span>
+                </div>
+            </div>
+            <i class='bx bx-chevron-right toggle'></i>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        </header>
+
+        <div class="menu-bar">
+            <div class="menu">
+                <ul class="menu-links">
+                    <li class="nav-link">
+                        <a href="/">
+                            <i class='bx bx-home-alt icon'></i>
+                            <span class="text nav-text">Accueil</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="/http">
+                            <i class='bx bx-network-chart icon'></i>
+                            <span class="text nav-text">Logs HTTP</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="/sql">
+                            <i class='bx bx-shield-alt icon'></i>
+                            <span class="text nav-text">Analyse SQL</span>
+                        </a>
+                    </li>
+                    <li class="nav-link active">
+                        <a href="/analystic">
+                            <i class='bx bx-bar-chart-alt-2 icon'></i>
+                            <span class="text nav-text">Analytiques</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="/files">
+                            <i class='bx bx-data icon'></i>
+                            <span class="text nav-text">Sources</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bottom-content">
+                <li class="">
+                    <a href="/login">
+                        <i class='bx bx-log-out icon'></i>
+                        <span class="text nav-text">Déconnexion</span>
+                    </a>
+                </li>
+            </div>
+        </div>
+    </nav>
+
+    <section class="sql-content">
+        <div class="header">
+            <h1>Analyse des Logs HTTP</h1>
+            <p class="subtitle">Détection des requêtes HTTP suspectes</p>
+        </div>
+
+        <div class="sql-panel">
+            <div class="model-info">
+                <span><i class='bx bx-chip'></i> Modèle : MultinomialNB</span>
+                <span><i class='bx bx-stats'></i> Précision : {{ score }}%</span>
+            </div>
+
+            <div class="input-container">
+                <label for="http-query"><i class='bx bx-edit'></i> Requête HTTP à analyser</label>
+                <textarea 
+                    id="query" 
+                    name="query"
+                    placeholder="Exemple : GET /index.php?user=admin OR 1=1--"
+                    spellcheck="false"></textarea>
+            </div>
+
+            <button id="http-predict-btn" class="analyse-btn">
+                <i class='bx bx-search-alt'></i> Analyser
+            </button>
+
+            <div id="result-container">
+                <!-- Résultat Danger -->
+                <div class="sql-result danger" id="id-y-attack">
+                    <div class="result-icon">
+                        <i class='bx bx-error-circle'></i>
+                    </div>
+                    <div class="result-text">
+                        <h3>Attaque HTTP détectée !</h3>
+                        <p>Type : <strong>Injection SQL</strong> • Confiance : <span>92%</span></p>
+                    </div>
+                </div>
+                
+                <!-- Résultat Safe -->
+                <div class="sql-result safe" id="id-no-attack">
+                    <div class="result-icon">
+                        <i class='bx bx-check-circle'></i>
+                    </div>
+                    <div class="result-text">
+                        <h3>Aucune menace détectée</h3>
+                        <p>La requête semble sécurisée</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historique -->
+        <div class="history-section">
+            <h2><i class='bx bx-history'></i> Historique des analyses</h2>
+            <div class="history-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Requête</th>
+                            <th>Résultat</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td class="query-preview">GET /admin.php?id=1 OR 1=1</td>
+                            <td><span class="badge danger">Danger</span></td>
+                            <td>10/05/2023</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <script src="static/script.js"></script>
+</body>
+</html>

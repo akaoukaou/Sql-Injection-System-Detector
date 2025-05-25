@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytiques | SQL Shield</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/sql.css"> 
+    <link rel="stylesheet" href="/static/analystic.css"> 
+    <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
+</head>
+
+<body>
+    <nav class="sidebar">
+        <header>
+            <div class="image-text">
+                <span class="image">
+                    <img src="/static/images/logo.png" alt="Logo SQL Shield">
+                </span>
+                <div class="text logo-text">
+                    <span class="name">SQL App</span>
+                    <span class="profession">Analyser</span>
+                </div>
+            </div>
+            <i class='bx bx-chevron-right toggle'></i>
+        </header>
+
+        <div class="menu-bar">
+            <div class="menu">
+                <ul class="menu-links">
+                    <li class="nav-link">
+                        <a href="/">
+                            <i class='bx bx-home-alt icon'></i>
+                            <span class="text nav-text">Accueil</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="/http">
+                            <i class='bx bx-network-chart icon'></i>
+                            <span class="text nav-text">Logs HTTP</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="/sql">
+                            <i class='bx bx-shield-alt icon'></i>
+                            <span class="text nav-text">Analyse SQL</span>
+                        </a>
+                    </li>
+                    <li class="nav-link active">
+                        <a href="/analystic">
+                            <i class='bx bx-bar-chart-alt-2 icon'></i>
+                            <span class="text nav-text">Analytiques</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="/files">
+                            <i class='bx bx-data icon'></i>
+                            <span class="text nav-text">Sources</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bottom-content">
+                <li class="">
+                    <a href="/login">
+                        <i class='bx bx-log-out icon'></i>
+                        <span class="text nav-text">Déconnexion</span>
+                    </a>
+                </li>
+            </div>
+        </div>
+    </nav>
+
+    <section class="sql-content">
+        <div class="header">
+            <h1>Tableau de Bord Analytique</h1>
+            <p class="subtitle">Statistiques et activités récentes</p>
+        </div>
+        
+        <div class="analytics-container">
+            <!-- Section Performances des Modèles -->
+            <div class="analytics-card">
+                <h2><i class='bx bx-stats'></i> Performances des Modèles</h2>
+                <div class="model-performance">
+                    <div class="model-card">
+                        <div class="model-icon" style="background-color: #4361ee;">
+                            <i class='bx bx-chip'></i>
+                        </div>
+                        <h3>SVC</h3>
+                        <div class="accuracy">90.03%</div>
+                        <p>Meilleure précision globale</p>
+                    </div>
+                    <div class="model-card">
+                        <div class="model-icon" style="background-color: #3f37c9;">
+                            <i class='bx bx-brain'></i>
+                        </div>
+                        <h3>MultinomialNB</h3>
+                        <div class="accuracy">71.54%</div>
+                        <p>Rapide pour logs individuels</p>
+                    </div>
+                    <div class="model-card">
+                        <div class="model-icon" style="background-color: #4cc9f0;">
+                            <i class='bx bx-layer'></i>
+                        </div>
+                        <h3>Ensemble</h3>
+                        <div class="accuracy">62.01%</div>
+                        <p>Détection de nouveaux motifs</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tendance Section -->
+            <div class="analytics-card">
+                <h2><i class='bx bx-trending-up'></i> Tendances des Détections</h2>
+                <div class="charts-container">
+                    <div class="chart-wrapper">
+                        <canvas id="attacksByTypeChart"></canvas>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="accuracyOverTimeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Activité Récente -->
+            <div class="analytics-card">
+                <h2><i class='bx bx-history'></i> Activité Récente</h2>
+                <!-- Filters -->
+                <div class="analytics-filters">
+                    <div class="filter-group">
+                        <label for="time-range"><i class='bx bx-calendar'></i> Période :</label>
+                        <select id="time-range">
+                            <option value="24h">24 dernières heures</option>
+                            <option value="7d">7 derniers jours</option>
+                            <option value="30d">30 derniers jours</option>
+                            <option value="all">Tout l'historique</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="model-filter"><i class='bx bx-chip'></i> Modèle :</label>
+                        <select id="model-filter">
+                            <option value="all">Tous les modèles</option>
+                            <option value="svc">SVC</option>
+                            <option value="nb">MultinomialNB</option>
+                            <option value="ensemble">Ensemble</option>
+                        </select>
+                    </div>
+                    <button class="filter-btn" onclick="bientot()">
+                        <i class='bx bx-filter-alt'></i> Appliquer
+                    </button>
+                </div>
+                <div class="recent-activity">
+                    <table class="activity-table">
+                        <thead>
+                            <tr>
+                                <th>Modèle</th>
+                                <th>Requête</th>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>SVC</td>
+                                <td class="query-preview">SELECT * FROM users</td>
+                                <td>SQL</td>
+                                <td>2023-05-10</td>
+                                <td><span class="badge danger">Danger</span></td>
+                            </tr>
+                            <tr>
+                                <td>MultinomialNB</td>
+                                <td class="query-preview">GET /index.php?user=admin</td>
+                                <td>HTTP</td>
+                                <td>2023-05-10</td>
+                                <td><span class="badge safe">Sûr</span></td>
+                            </tr>
+                            <tr>
+                                <td>SVC</td>
+                                <td class="query-preview">SELECT * FROM admin</td>
+                                <td>SQL</td>
+                                <td>2023-05-09</td>
+                                <td><span class="badge danger">Danger</span></td>
+                            </tr>
+                            <tr>
+                                <td>MultinomialNB</td>
+                                <td class="query-preview">POST /login.php</td>
+                                <td>HTTP</td>
+                                <td>2023-05-09</td>
+                                <td><span class="badge danger">Danger</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="static/script.js"></script>
+</body>
+</html>

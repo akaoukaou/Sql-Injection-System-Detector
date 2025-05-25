@@ -1,0 +1,264 @@
+/* ===== FILES PAGE ===== */
+.files-container {
+    display: grid;
+    gap: 2rem;
+}
+
+.files-card {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Zone de dépôt */
+.drop-zone {
+    border: 2px dashed var(--gray);
+    border-radius: var(--radius);
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    margin: 1.5rem 0;
+}
+
+.drop-zone.highlight {
+    border-color: var(--primary);
+    background-color: var(--primary-color-light);
+}
+
+.drop-zone i {
+    font-size: 3rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.drop-zone p {
+    color: var(--text);
+    margin-bottom: 1.5rem;
+}
+
+.upload-btn {
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: var(--radius);
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.upload-btn:hover {
+    background: #5a4fdf;
+    transform: translateY(-2px);
+}
+
+/* Barre de progression */
+.upload-progress {
+    margin-top: 1.5rem;
+}
+
+.progress-item {
+    padding: 1rem;
+    border: 1px solid var(--toggle-color);
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    transition: var(--transition);
+}
+
+.progress-item.completed {
+    border-color: var(--success);
+    background-color: var(--success-light);
+}
+
+.file-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.file-size {
+    color: var(--gray);
+}
+
+.progress-bar {
+    height: 6px;
+    background: var(--toggle-color);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 0.5rem 0;
+}
+
+.progress-bar .progress {
+    height: 100%;
+    background: var(--primary);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-status {
+    text-align: right;
+    font-size: 0.8rem;
+    color: var(--primary);
+}
+
+/* Liste des fichiers */
+.file-actions {
+    display: flex;
+    justify-content: space-between;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.search-box {
+    position: relative;
+    flex: 1;
+    min-width: 250px;
+}
+
+.search-box i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray);
+}
+
+.search-box input {
+    width: 100%;
+    padding: 0.8rem 1rem 0.8rem 2.5rem;
+    border: 1px solid var(--toggle-color);
+    border-radius: var(--radius);
+    transition: var(--transition);
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.sort-options {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sort-options select {
+    padding: 0.5rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--toggle-color);
+    background: var(--white);
+}
+
+.files-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.files-table th {
+    background: var(--primary-color-light);
+    color: var(--primary);
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.files-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--toggle-color);
+    vertical-align: middle;
+}
+
+.files-table td:first-child {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.files-table td i {
+    font-size: 1.2rem;
+    color: var(--primary);
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.action-btn:hover {
+    background: var(--primary-color-light);
+    color: var(--primary);
+}
+
+.analyze-btn {
+    color: #4361ee;
+}
+
+.download-btn {
+    color: #4CAF50;
+}
+
+.delete-btn {
+    color: #ff4d4d;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.pagination-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--toggle-color);
+    background: var(--white);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.pagination-btn:not(:disabled):hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .files-table {
+        display: block;
+        overflow-x: auto;
+    }
+    
+    .file-actions {
+        flex-direction: column;
+    }
+    
+    .search-box {
+        min-width: 100%;
+    }
+}

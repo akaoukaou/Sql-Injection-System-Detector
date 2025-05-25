@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Analyser Demo</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+    <nav class="sidebar">
+        <header>
+            <div class="image-text">
+                <span class="image">
+                    <img src="/static/images/logo.png" alt="Logo SQL Shield">
+                </span>
+                <div class="text logo-text">
+                    <span class="name">SQL App</span>
+                    <span class="profession">Analyser</span>
+                </div>
+            </div>
+            <i class='bx bx-chevron-right toggle'></i>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        </header>
+
+        <div class="menu-bar">
+            <div class="menu">
+                <ul class="menu-links">
+                    <li class="nav-link">
+                        <a href="/">
+                            <i class='bx bx-home-alt icon'></i>
+                            <span class="text nav-text">Accueil</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="/http">
+                            <i class='bx bx-network-chart icon'></i>
+                            <span class="text nav-text">Logs HTTP</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="/sql">
+                            <i class='bx bx-shield-alt icon'></i>
+                            <span class="text nav-text">Analyse SQL</span>
+                        </a>
+                    </li>
+                    <li class="nav-link active">
+                        <a href="/analystic">
+                            <i class='bx bx-bar-chart-alt-2 icon'></i>
+                            <span class="text nav-text">Analytiques</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="/files">
+                            <i class='bx bx-data icon'></i>
+                            <span class="text nav-text">Sources</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bottom-content">
+                <li class="">
+                    <a href="/login">
+                        <i class='bx bx-log-out icon'></i>
+                        <span class="text nav-text">Déconnexion</span>
+                    </a>
+                </li>
+            </div>
+        </div>
+    </nav>
+
+    <main class="home-page">
+
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Détection avancée d'injections SQL</h1>
+                <p>Solution basée sur le Machine Learning pour analyser les logs d'accès</p>
+                <div class="hero-actions">
+                    <a href="/sql" class="btn primary">Commencer l'analyse</a>
+                    <a href="/files" class="btn secondary">Voir les logs</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="feature-card">
+                <i class='bx bx-check-shield'></i>
+                <h3>Détection en temps réel</h3>
+                <p>Analyse continue des logs pour une protection immédiate</p>
+            </div>
+            <div class="feature-card">
+                <i class='bx bx-data'></i>
+                <h3>Multi-sources</h3>
+                <p>Supporte Access Logs, LogHub et CSE-CIC-IDS2</p>
+            </div>
+            <div class="feature-card">
+                <i class='bx bx-brain'></i>
+                <h3>Algorithmes ML</h3>
+                <p>Combinaison de plusieurs modèles d'apprentissage</p>
+            </div>
+        </section>
+
+        <section class="about-project">
+            <div class="about-content">
+                <div class="about-text">
+                    <h2>Notre Solution</h2>
+                    <p>
+                        Ce projet de fin d'études propose une solution innovante pour détecter les injections SQL 
+                        à travers l'analyse de différents types de logs. Notre système combine plusieurs approches 
+                        de Machine Learning pour une détection optimale.
+                    </p>
+                    <ul class="tech-list">
+                        <li><i class='bx bx-check'></i> Analyse combinée de multiples sources de logs</li>
+                        <li><i class='bx bx-check'></i> Détection des motifs d'injection SQL</li>
+                        <li><i class='bx bx-check'></i> Minimisation des faux positifs</li>
+                    </ul>
+                </div>
+                <div class="about-image">
+                    <img src="static/images/homeImg.png" alt="Analyse de logs">
+                </div>
+            </div>
+        </section>
+
+        <section class="model-performance">
+            <h2>Performance des modèles</h2>
+            <div class="models-grid">
+                <div class="model-card">
+                    <div class="model-icon svc">
+                        <i class='bx bx-chip'></i>
+                    </div>
+                    <h3>SVC</h3>
+                    <div class="accuracy">90.03%</div>
+                    <p>Meilleure précision globale</p>
+                </div>
+                <div class="model-card">
+                    <div class="model-icon nb">
+                        <i class='bx bx-stats'></i>
+                    </div>
+                    <h3>MultinomialNB</h3>
+                    <div class="accuracy">71.54%</div>
+                    <p>Rapide pour logs individuels</p>
+                </div>
+                <div class="model-card">
+                    <div class="model-icon ensemble">
+                        <i class='bx bx-layer'></i>
+                    </div>
+                    <h3>Ensemble</h3>
+                    <div class="accuracy">62.01%</div>
+                    <p>Détection de nouveaux motifs</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="static/script.js"></script>
+</body>
+</html>
