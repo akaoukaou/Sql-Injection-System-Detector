@@ -22,6 +22,6 @@ accuracy = accuracy_score(y_test, y_pred)
 
 model_accuracy = float(f"{accuracy * 100:.2f}")
 
-def predict_query(query):
+def http_predict_query(query):
     query_vector = vectorizer.transform([query])
     return int(model.predict(query_vector)[0])
