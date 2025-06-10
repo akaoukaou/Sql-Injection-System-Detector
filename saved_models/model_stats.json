@@ -1,28 +1,28 @@
 {
     "randomforest": {
-        "train_accuracy": 99.52,
-        "val_accuracy": 99.31,
-        "test_accuracy": 99.31,
-        "precision": 99.42,
-        "recall": 98.74,
-        "f1_score": 99.08,
-        "cv_score": 99.31,
-        "training_time": 70.15,
+        "train_accuracy": 99.82,
+        "val_accuracy": 99.77,
+        "test_accuracy": 99.78,
+        "precision": 99.95,
+        "recall": 99.46,
+        "f1_score": 99.7,
+        "cv_score": 99.77,
+        "training_time": 89.93,
         "best_params": {
-            "clf__max_depth": 20,
+            "clf__max_depth": null,
             "clf__min_samples_split": 2,
-            "clf__n_estimators": 200
+            "clf__n_estimators": 100
         }
     },
     "svm": {
-        "train_accuracy": 97.75,
-        "val_accuracy": 97.68,
-        "test_accuracy": 97.83,
-        "precision": 98.11,
-        "recall": 96.04,
-        "f1_score": 97.06,
-        "cv_score": 97.68,
-        "training_time": 3181.18,
+        "train_accuracy": 99.61,
+        "val_accuracy": 99.57,
+        "test_accuracy": 99.55,
+        "precision": 99.91,
+        "recall": 98.87,
+        "f1_score": 99.39,
+        "cv_score": 99.57,
+        "training_time": 1406.2,
         "best_params": {
             "clf__C": 10.0,
             "clf__gamma": "scale",
@@ -30,16 +30,16 @@
         }
     },
     "logisticregression": {
-        "train_accuracy": 94.75,
-        "val_accuracy": 94.71,
-        "test_accuracy": 95.11,
-        "precision": 95.64,
-        "recall": 91.05,
-        "f1_score": 93.29,
-        "cv_score": 94.71,
-        "training_time": 20.17,
+        "train_accuracy": 98.2,
+        "val_accuracy": 98.19,
+        "test_accuracy": 98.12,
+        "precision": 98.42,
+        "recall": 96.51,
+        "f1_score": 97.45,
+        "cv_score": 98.19,
+        "training_time": 42.68,
         "best_params": {
-            "clf__C": 1.0,
+            "clf__C": 0.1,
             "clf__penalty": "l2",
             "clf__solver": "saga"
         }

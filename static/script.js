@@ -78,7 +78,7 @@ async function analyzeSQL() {
 
         // Show results
         resultContainer.style.display = 'block';
-        document.getElementById(data.result === 1 ? 'result-safe' : 'result-danger').style.display = 'flex';
+        document.getElementById(data.result === 1 ? 'result-danger' : 'result-safe').style.display = 'flex';
         addToHistory(input, data.result, 'sql');
         
     } catch (error) {
@@ -121,7 +121,7 @@ async function analyzeHttp() {
 
         // Show results
         resultContainer.style.display = 'block';
-        document.getElementById(data.result === 1 ? 'result-safe' : 'result-danger').style.display = 'flex';
+        document.getElementById(data.result === 1 ? 'result-danger' : 'result-safe').style.display = 'flex';
         addToHistory(input, data.result, 'http');
 
     } catch (error) {
@@ -237,7 +237,7 @@ function addToHistory(query, result, type = 'sql') {
     const idString = '#' + newId.toString().padStart(3, '0');
 
     // Affichage résultat
-    const isDanger = result !== 1;
+    const isDanger = result === 1;
     const resultBadge = isDanger
         ? `<span class="status-badge danger"><i class='bx bx-error-circle'></i> Menace</span>`
         : `<span class="status-badge safe"><i class='bx bx-check-circle'></i> Sécurisée</span>`;

@@ -55,6 +55,8 @@ def predict_sql_route():
 
     model_path = f"saved_models/all_models/{selected_model}_model.pkl"
 
+    print(f"MODEL PATH UTILISÉ DANS FLASK : {model_path}")
+
     # Charger le modèle choisi
     try:
         with open(model_path, "rb") as f:
@@ -71,34 +73,26 @@ def predict_sql_route():
             "LONGUEUR", "SCORE_INJECTION", "NB_KEYWORDS", "NB_SPECIAL_CHARS", "NB_QUOTES",
             "NB_COMMENT_SYNTAX", "RATIO_SCORE_LONGUEUR", "SCORE_COMPLEXITE", "CONTIENT_OR", "CONTIENT_QUOTE",
             "CONTIENT_COMMENT", "CONTIENT_UNION", "CONTIENT_EQUAL", "CONTIENT_PARENTHESES",
-            "CONTIENT_TIME", "CONTIENT_FUNCTION", "CONTIENT_IN_CLAUSE", "CLASSE_LONGUEUR",
+            "CONTIENT_TIME", "CONTIENT_FUNCTION", "CLASSE_LONGUEUR",
             "LONGUEUR_NORM", "SCORE_INJECTION_NORM", "NB_KEYWORDS_NORM", "NB_SPECIAL_CHAR_NORM",
-            "NB_QUOTES_NORM", "NB_COMMENTS_NORM", "RATIO_SCORE_LONGUEUR_NORM", "SCORE_COMPLEXITE_NORM",
-            "CONTIENT_EXEC", "CONTIENT_SEMICOLON", "CONTIENT_UNION_SELECT"
+            "NB_QUOTES_NORM", "NB_COMMENTS_NORM", "RATIO_SCORE_LONGUEUR_NORM", "SCORE_COMPLEXITE_NORM"
         ]
-        # 3. Liste des features attendues par le modèle
-        selected_features = [
-            "LONGUEUR",
-            "SCORE_INJECTION",
-            "RATIO_SCORE_LONGUEUR",
-            "SCORE_COMPLEXITE",
-            "LONGUEUR_NORM",
-            "SCORE_INJECTION_NORM",
-            "NB_KEYWORDS_NORM",
-            "NB_SPECIAL_CHAR_NORM",
-            "NB_QUOTES_NORM",
-            "RATIO_SCORE_LONGUEUR_NORM",
-            "SCORE_COMPLEXITE_NORM"
-        ]
+
         # 4. Filtrer et ordonner les features à passer au modèle
         features_dict = dict(zip(all_feature_names, features_all))
-        features_selected = [features_dict[name] for name in selected_features]
+
+        features_selected = [features_dict[name] for name in all_feature_names]
 
         # 5. Créer le DataFrame avec seulement les bonnes colonnes dans le bon ordre
-        df = pd.DataFrame([features_selected], columns=selected_features)
+        df = pd.DataFrame([features_selected], columns=all_feature_names)
+
+        print("Features envoyées au modèle Flask :", features_selected)
 
         # 6. Faire la prédiction
         prediction = loaded_model.predict(df)[0]
+
+        print("MODEL PATH UTILISÉ DANS FLASK :", model_path)
+        print("Résultat brut du modèle :", prediction)
 
         # Facultatif : calculer la confiance si le modèle le permet
         try:
