@@ -5,9 +5,485 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analytiques | SQL Shield</title>
     <link rel="stylesheet" href="/static/style.css">
-    <link rel="stylesheet" href="/static/sql.css"> 
-    <link rel="stylesheet" href="/static/analystic.css"> 
     <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* ===== FONTS IMPORT ===== */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+            /* Primary Purple Theme (matching sidebar) */
+            --primary: #695CFE;
+            --primary-dark: #5a4de6;
+            --primary-light: #8a7fff;
+            --primary-lighter: #F6F5FF;
+            --primary-ultra-light: #faf9ff;
+            
+            /* Secondary Colors */
+            --secondary: #4ECDC4;
+            --secondary-light: #e6fffe;
+            --secondary-dark: #45b7b8;
+            
+            /* Status Colors */
+            --danger: #ff3243;
+            --danger-dark: #ff3742;
+            --danger-light: #fff1f2;
+            
+            --warning: #ffa502;
+            --warning-light: #fff8e6;
+            
+            --success: #00d157;
+            --success-light: #f0fff4;
+            --success-dark: #26de81;
+            
+            /* Neutral Colors - Softer palette */
+            --gray-50: #fafbfc;
+            --gray-100: #f4f6f8;
+            --gray-200: #e8ecf0;
+            --gray-300: #dde2e8;
+            --gray-400: #9ca3af;
+            --gray-500: #707070;
+            --gray-600: #5a6c7d;
+            --gray-700: #495864;
+            --gray-800: #2b2d42;
+            --gray-900: #1a1d29;
+            
+            --white: #ffffff;
+            --black: #000000;
+            
+            /* Sidebar variables */
+            --sidebar-color: #FFF;
+            --primary-color: #695CFE;
+            --text-color: #707070;
+            --toggle-color: #DDD;
+            --primary-color-light: #F6F5FF;
+            --dark: #2b2d42;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --body-bg: #F6F5FF;
+            
+            /* Layout */
+            --sidebar-width: 250px;
+            --sidebar-collapsed: 88px;
+            --content-max-width: 1400px;
+            
+            /* Modern Shadows with purple tint */
+            --shadow-sm: 0 1px 2px 0 rgba(105, 92, 254, 0.08);
+            --shadow: 0 1px 3px 0 rgba(105, 92, 254, 0.12), 0 1px 2px -1px rgba(105, 92, 254, 0.06);
+            --shadow-md: 0 4px 6px -1px rgba(105, 92, 254, 0.12), 0 2px 4px -2px rgba(105, 92, 254, 0.08);
+            --shadow-lg: 0 10px 15px -3px rgba(105, 92, 254, 0.15), 0 8px 10px -8px rgba(105, 92, 254, 0.08);
+            --shadow-xl: 0 20px 25px -5px rgba(105, 92, 254, 0.15), 0 10px 10px -5px rgba(105, 92, 254, 0.06);
+            
+            /* Modern Radius */
+            --radius-sm: 6px;
+            --radius: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --radius-full: 9999px;
+            
+            /* Modern Transitions */
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            /* Typography */
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+        }
+
+        /* ===== BASE RESET ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary-ultra-light) 0%, var(--body-bg) 50%, var(--white) 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            transition: var(--transition);
+        }
+
+        /* ===== MAIN STRUCTURE ===== */
+        .analytics-content {
+            position: absolute;
+            top: 0;
+            left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            min-height: 100vh;
+            background: transparent;
+            transition: var(--transition);
+            font-family: var(--font-family);
+        }
+        .sidebar.close ~ .analytics-content {
+            left: var(--sidebar-collapsed);
+            width: calc(100% - var(--sidebar-collapsed));
+        }
+
+        /* ===== PAGE HEADER ===== */
+        .page-header {
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.95) 0%, 
+                rgba(246, 245, 255, 0.9) 30%,
+                rgba(105, 92, 254, 0.05) 70%,
+                rgba(255, 255, 255, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+            margin: 2rem;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(105, 92, 254, 0.1);
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3rem 2.5rem;
+            gap: 2rem;
+        }
+
+        .header-title h1 {
+            font-size: 2.75rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--gray-800) 0%, var(--primary) 50%, var(--primary-dark) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--gray-600);
+            font-weight: 500;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* ===== STATS OVERVIEW ===== */
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 0 2rem 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(105, 92, 254, 0.1);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .stat-card.danger::before {
+            background: linear-gradient(90deg, var(--danger) 0%, #ff6b7a 100%);
+        }
+
+        .stat-card.warning::before {
+            background: linear-gradient(90deg, var(--warning) 0%, #ffb84d 100%);
+        }
+
+        .stat-card.success::before {
+            background: linear-gradient(90deg, var(--success) 0%, #4cd964 100%);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--white);
+        }
+
+        .stat-icon.primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        }
+
+        .stat-icon.danger {
+            background: linear-gradient(135deg, var(--danger) 0%, var(--danger-dark) 100%);
+        }
+
+        .stat-icon.warning {
+            background: linear-gradient(135deg, var(--warning) 0%, #ff8c00 100%);
+        }
+
+        .stat-icon.success {
+            background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
+        }
+
+        .stat-value {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--gray-800);
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: var(--gray-600);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .stat-change {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .stat-change.positive {
+            color: var(--success);
+        }
+
+        .stat-change.negative {
+            color: var(--danger);
+        }
+
+        /* ===== CHARTS SECTION ===== */
+        .charts-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin: 0 2rem 2rem;
+        }
+
+        .chart-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(105, 92, 254, 0.1);
+            overflow: hidden;
+        }
+
+        .chart-header {
+            background: linear-gradient(135deg, 
+                rgba(246, 245, 255, 0.8) 0%, 
+                rgba(105, 92, 254, 0.05) 30%, 
+                rgba(246, 245, 255, 0.8) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid rgba(105, 92, 254, 0.1);
+        }
+
+        .chart-header h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 0;
+        }
+
+        .chart-header i {
+            color: var(--primary);
+            font-size: 1.25rem;
+        }
+
+        .chart-content {
+            padding: 2rem;
+            height: 400px;
+            position: relative;
+        }
+
+        /* ===== THREATS TABLE ===== */
+        .threats-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            margin: 0 2rem 2rem;
+            overflow: hidden;
+            border: 1px solid rgba(105, 92, 254, 0.1);
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, 
+                rgba(246, 245, 255, 0.8) 0%, 
+                rgba(105, 92, 254, 0.05) 30%, 
+                rgba(246, 245, 255, 0.8) 100%);
+            padding: 2rem 2.5rem;
+            border-bottom: 1px solid rgba(105, 92, 254, 0.1);
+            position: relative;
+        }
+
+        .section-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, 
+                var(--primary) 0%, 
+                var(--secondary) 50%, 
+                var(--primary) 100%);
+        }
+
+        .section-header h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 0;
+        }
+
+        .section-header h2 i {
+            font-size: 1.5rem;
+            color: var(--primary);
+            padding: 0.5rem;
+            background: rgba(105, 92, 254, 0.1);
+            border-radius: var(--radius);
+        }
+
+        .threats-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .threats-table thead {
+            background: rgba(246, 245, 255, 0.6);
+        }
+
+        .threats-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--gray-800);
+            border-bottom: 1px solid rgba(105, 92, 254, 0.1);
+        }
+
+        .threats-table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(105, 92, 254, 0.05);
+        }
+
+        .threats-table tbody tr:hover {
+            background: rgba(246, 245, 255, 0.4);
+        }
+
+        .threat-type {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .threat-type.sql {
+            background: rgba(105, 92, 254, 0.1);
+            color: var(--primary-dark);
+        }
+
+        .threat-type.http {
+            background: rgba(78, 205, 196, 0.1);
+            color: var(--secondary-dark);
+        }
+
+        .severity {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .severity.high {
+            background: rgba(255, 71, 87, 0.1);
+            color: var(--danger-dark);
+        }
+
+        .severity.medium {
+            background: rgba(255, 165, 2, 0.1);
+            color: var(--warning);
+        }
+
+        .severity.low {
+            background: rgba(46, 213, 115, 0.1);
+            color: var(--success-dark);
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 1200px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-overview {
+                grid-template-columns: 1fr;
+                margin: 0 1rem 1rem;
+            }
+
+            .page-header,
+            .chart-card,
+            .threats-section {
+                margin: 0 1rem 1rem;
+            }
+
+            .header-content {
+                padding: 2rem 1.5rem;
+            }
+
+            .header-title h1 {
+                font-size: 2rem;
+            }
+
+            .charts-section {
+                margin: 0 1rem 1rem;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -23,6 +499,7 @@
                 </div>
             </div>
             <i class='bx bx-chevron-right toggle'></i>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         </header>
 
         <div class="menu-bar">
@@ -36,14 +513,14 @@
                     </li>
                     <li class="nav-link">
                         <a href="/http">
-                            <i class='bx bx-network-chart icon'></i>
+                            <i class='bx bx-file-find icon'></i>
                             <span class="text nav-text">Logs HTTP</span>
                         </a>
                     </li>
                     <li class="nav-link">
                         <a href="/sql">
                             <i class='bx bx-shield-alt icon'></i>
-                            <span class="text nav-text">Analyse SQL</span>
+                            <span class="text nav-text">Logs SQL</span>
                         </a>
                     </li>
                     <li class="nav-link active">
@@ -72,132 +549,320 @@
         </div>
     </nav>
 
-    <section class="sql-content">
-        <div class="header">
-            <h1>Tableau de Bord Analytique</h1>
-            <p class="subtitle">Statistiques et activités récentes</p>
-        </div>
-        
-        <div class="analytics-container">
-            <!-- Section Performances des Modèles -->
-            <div class="analytics-card">
-                <h2><i class='bx bx-stats'></i> Performances des Modèles</h2>
-                <div class="model-performance">
-                    <div class="model-card">
-                        <div class="model-icon" style="background-color: #4361ee;">
-                            <i class='bx bx-chip'></i>
-                        </div>
-                        <h3>SVC</h3>
-                        <div class="accuracy">90.03%</div>
-                        <p>Meilleure précision globale</p>
+    <main class="analytics-content">
+        <!-- Header Section -->
+        <header class="page-header">
+            <div class="header-content">
+                <div class="header-title">
+                    <h1>Dashboard Analytiques 📊</h1>
+                    <p class="subtitle">Analyse en temps réel de la sécurité de vos systèmes avec intelligence artificielle</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Overview -->
+        <section class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon primary">
+                        <i class='bx bx-search-alt'></i>
                     </div>
-                    <div class="model-card">
-                        <div class="model-icon" style="background-color: #3f37c9;">
-                            <i class='bx bx-brain'></i>
-                        </div>
-                        <h3>MultinomialNB</h3>
-                        <div class="accuracy">71.54%</div>
-                        <p>Rapide pour logs individuels</p>
-                    </div>
-                    <div class="model-card">
-                        <div class="model-icon" style="background-color: #4cc9f0;">
-                            <i class='bx bx-layer'></i>
-                        </div>
-                        <h3>Ensemble</h3>
-                        <div class="accuracy">62.01%</div>
-                        <p>Détection de nouveaux motifs</p>
-                    </div>
+                </div>
+                <div class="stat-value">1,247</div>
+                <div class="stat-label">Analyses Totales</div>
+                <div class="stat-change positive">
+                    <i class='bx bx-trending-up'></i>
+                    +12% cette semaine
                 </div>
             </div>
 
-            <!-- Tendance Section -->
-            <div class="analytics-card">
-                <h2><i class='bx bx-trending-up'></i> Tendances des Détections</h2>
-                <div class="charts-container">
-                    <div class="chart-wrapper">
-                        <canvas id="attacksByTypeChart"></canvas>
+            <div class="stat-card danger">
+                <div class="stat-header">
+                    <div class="stat-icon danger">
+                        <i class='bx bx-error-circle'></i>
                     </div>
-                    <div class="chart-wrapper">
-                        <canvas id="accuracyOverTimeChart"></canvas>
-                    </div>
+                </div>
+                <div class="stat-value">23</div>
+                <div class="stat-label">Menaces Détectées</div>
+                <div class="stat-change negative">
+                    <i class='bx bx-trending-down'></i>
+                    +8% cette semaine
                 </div>
             </div>
 
-            <!-- Section Activité Récente -->
-            <div class="analytics-card">
-                <h2><i class='bx bx-history'></i> Activité Récente</h2>
-                <!-- Filters -->
-                <div class="analytics-filters">
-                    <div class="filter-group">
-                        <label for="time-range"><i class='bx bx-calendar'></i> Période :</label>
-                        <select id="time-range">
-                            <option value="24h">24 dernières heures</option>
-                            <option value="7d">7 derniers jours</option>
-                            <option value="30d">30 derniers jours</option>
-                            <option value="all">Tout l'historique</option>
-                        </select>
+            <div class="stat-card warning">
+                <div class="stat-header">
+                    <div class="stat-icon warning">
+                        <i class='bx bx-time'></i>
                     </div>
-                    <div class="filter-group">
-                        <label for="model-filter"><i class='bx bx-chip'></i> Modèle :</label>
-                        <select id="model-filter">
-                            <option value="all">Tous les modèles</option>
-                            <option value="svc">SVC</option>
-                            <option value="nb">MultinomialNB</option>
-                            <option value="ensemble">Ensemble</option>
-                        </select>
-                    </div>
-                    <button class="filter-btn" onclick="bientot()">
-                        <i class='bx bx-filter-alt'></i> Appliquer
-                    </button>
                 </div>
-                <div class="recent-activity">
-                    <table class="activity-table">
-                        <thead>
-                            <tr>
-                                <th>Modèle</th>
-                                <th>Requête</th>
-                                <th>Type</th>
-                                <th>Date</th>
-                                <th>Statut</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>SVC</td>
-                                <td class="query-preview">SELECT * FROM users</td>
-                                <td>SQL</td>
-                                <td>2023-05-10</td>
-                                <td><span class="badge danger">Danger</span></td>
-                            </tr>
-                            <tr>
-                                <td>MultinomialNB</td>
-                                <td class="query-preview">GET /index.php?user=admin</td>
-                                <td>HTTP</td>
-                                <td>2023-05-10</td>
-                                <td><span class="badge safe">Sûr</span></td>
-                            </tr>
-                            <tr>
-                                <td>SVC</td>
-                                <td class="query-preview">SELECT * FROM admin</td>
-                                <td>SQL</td>
-                                <td>2023-05-09</td>
-                                <td><span class="badge danger">Danger</span></td>
-                            </tr>
-                            <tr>
-                                <td>MultinomialNB</td>
-                                <td class="query-preview">POST /login.php</td>
-                                <td>HTTP</td>
-                                <td>2023-05-09</td>
-                                <td><span class="badge danger">Danger</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="stat-value">98.5%</div>
+                <div class="stat-label">Précision Moyenne</div>
+                <div class="stat-change positive">
+                    <i class='bx bx-trending-up'></i>
+                    +0.3% ce mois
                 </div>
             </div>
-        </div>
-    </section>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <div class="stat-card success">
+                <div class="stat-header">
+                    <div class="stat-icon success">
+                        <i class='bx bx-shield-check'></i>
+                    </div>
+                </div>
+                <div class="stat-value">1,224</div>
+                <div class="stat-label">Requêtes Sécurisées</div>
+                <div class="stat-change positive">
+                    <i class='bx bx-trending-up'></i>
+                    +15% cette semaine
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Section -->
+        <section class="charts-section">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>
+                        <i class='bx bx-line-chart'></i>
+                        Évolution des Détections
+                    </h3>
+                </div>
+                <div class="chart-content">
+                    <canvas id="detectionChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>
+                        <i class='bx bx-pie-chart-alt-2'></i>
+                        Types de Menaces
+                    </h3>
+                </div>
+                <div class="chart-content">
+                    <canvas id="threatTypesChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent Threats Table -->
+        <section class="threats-section">
+            <div class="section-header">
+                <h2><i class='bx bx-shield-x'></i> Menaces Récentes</h2>
+            </div>
+
+            <div class="table-container">
+                <table class="threats-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Requête</th>
+                            <th>Sévérité</th>
+                            <th>IP Source</th>
+                            <th>Modèle</th>
+                            <th>Confiance</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <span class="threat-type sql">
+                                    <i class='bx bx-data'></i>
+                                    SQL
+                                </span>
+                            </td>
+                            <td>
+                                <code style="background: rgba(246, 245, 255, 0.6); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem;">
+                                    SELECT * FROM users WHERE id = 1 OR 1=1 --
+                                </code>
+                            </td>
+                            <td>
+                                <span class="severity high">
+                                    <i class='bx bx-error-circle'></i>
+                                    Élevée
+                                </span>
+                            </td>
+                            <td>192.168.1.42</td>
+                            <td>Random Forest</td>
+                            <td>
+                                <div style="background: rgba(105, 92, 254, 0.1); border-radius: 10px; padding: 0.25rem 0.5rem; text-align: center; font-weight: 600; color: var(--primary-dark);">
+                                    97%
+                                </div>
+                            </td>
+                            <td>15/01/2024 14:30</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="threat-type http">
+                                    <i class='bx bx-globe'></i>
+                                    HTTP
+                                </span>
+                            </td>
+                            <td>
+                                <code style="background: rgba(246, 245, 255, 0.6); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem;">
+                                    GET /admin.php?cmd=ls -la
+                                </code>
+                            </td>
+                            <td>
+                                <span class="severity medium">
+                                    <i class='bx bx-error'></i>
+                                    Moyenne
+                                </span>
+                            </td>
+                            <td>10.0.0.15</td>
+                            <td>SVM</td>
+                            <td>
+                                <div style="background: rgba(255, 165, 2, 0.1); border-radius: 10px; padding: 0.25rem 0.5rem; text-align: center; font-weight: 600; color: var(--warning);">
+                                    84%
+                                </div>
+                            </td>
+                            <td>15/01/2024 14:25</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="threat-type sql">
+                                    <i class='bx bx-data'></i>
+                                    SQL
+                                </span>
+                            </td>
+                            <td>
+                                <code style="background: rgba(246, 245, 255, 0.6); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem;">
+                                    UNION SELECT password FROM admin_users
+                                </code>
+                            </td>
+                            <td>
+                                <span class="severity high">
+                                    <i class='bx bx-error-circle'></i>
+                                    Élevée
+                                </span>
+                            </td>
+                            <td>203.0.113.77</td>
+                            <td>Logistic Regression</td>
+                            <td>
+                                <div style="background: rgba(255, 71, 87, 0.1); border-radius: 10px; padding: 0.25rem 0.5rem; text-align: center; font-weight: 600; color: var(--danger-dark);">
+                                    99%
+                                </div>
+                            </td>
+                            <td>15/01/2024 14:20</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="threat-type http">
+                                    <i class='bx bx-globe'></i>
+                                    HTTP
+                                </span>
+                            </td>
+                            <td>
+                                <code style="background: rgba(246, 245, 255, 0.6); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem;">
+                                    POST /upload.php &lt;script&gt;alert('XSS')&lt;/script&gt;
+                                </code>
+                            </td>
+                            <td>
+                                <span class="severity low">
+                                    <i class='bx bx-check-circle'></i>
+                                    Faible
+                                </span>
+                            </td>
+                            <td>172.16.0.8</td>
+                            <td>Random Forest</td>
+                            <td>
+                                <div style="background: rgba(46, 213, 115, 0.1); border-radius: 10px; padding: 0.25rem 0.5rem; text-align: center; font-weight: 600; color: var(--success-dark);">
+                                    76%
+                                </div>
+                            </td>
+                            <td>15/01/2024 14:15</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
     <script src="static/script.js"></script>
+    <script>
+        // Chart.js Configuration
+        document.addEventListener('DOMContentLoaded', function() {
+            // Detection Evolution Chart
+            const detectionCtx = document.getElementById('detectionChart').getContext('2d');
+            new Chart(detectionCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+                    datasets: [{
+                        label: 'SQL Injections',
+                        data: [12, 19, 3, 5, 2, 8, 15],
+                        borderColor: '#695CFE',
+                        backgroundColor: 'rgba(105, 92, 254, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'HTTP Injections',
+                        data: [8, 11, 7, 3, 6, 4, 9],
+                        borderColor: '#4ECDC4',
+                        backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(105, 92, 254, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(105, 92, 254, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Threat Types Pie Chart
+            const threatTypesCtx = document.getElementById('threatTypesChart').getContext('2d');
+            new Chart(threatTypesCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['SQL Injection', 'XSS', 'CSRF', 'Path Traversal', 'Command Injection'],
+                    datasets: [{
+                        data: [45, 25, 15, 10, 5],
+                        backgroundColor: [
+                            '#695CFE',
+                            '#4ECDC4',
+                            '#ff3243',
+                            '#ffa502',
+                            '#00d157'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>

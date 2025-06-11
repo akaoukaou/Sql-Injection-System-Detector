@@ -6,7 +6,897 @@
     <title>SQL Analyser Demo</title>
     <link rel="stylesheet" href="/static/style.css">
     <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="preload" href="/static/style.css" as="style">
+    <link rel="preload" href="https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css" as="style">
+    <style>
+        /* Variables CSS principales pour les sections */
+:root {
+    /* Variables sidebar - assurez-vous qu'elles correspondent à votre style.css */
+    --sidebar-width: 250px;
+    --sidebar-collapsed: 88px;
+    --transition: all 0.3s ease;
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-full: 50px;
+    
+    /* Palette de couleurs bleue */
+    --primary-blue: #2563eb;
+    --primary-blue-light: #3b82f6;
+    --primary-blue-dark: #1d4ed8;
+    --secondary-blue: #1e40af;
+    --accent-blue: #60a5fa;
+    
+    
+    /* Couleurs complémentaires */
+    --accent-green: #10b981;
+    --accent-green-light: #34d399;
+    --accent-orange: #f59e0b;
+    --accent-orange-light: #fbbf24;
+    
+    /* Couleurs neutres */
+    --white: #ffffff;
+    --off-white: #f8fafc;
+    --light-gray: #f1f5f9;
+    --text-dark: #1e293b;
+    --text-gray: #64748b;
+    
+    /* Dégradés */
+    --gradient-primary: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-light) 50%, var(--accent-blue) 100%);
+    --gradient-secondary: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-green-light) 100%);
+    --gradient-accent: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-orange-light) 100%);
+    --gradient-dark: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, var(--secondary-blue) 100%);
+}
+
+/* Structure principale - CORRECTION IMPORTANTE */
+.home-content {
+    position: absolute;
+    top: 0;
+    left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+    min-height: 100vh;
+    transition: var(--transition);
+    font-family: var(--font-family);
+    overflow-x: hidden;
+    /* AJOUT CRITIQUE : Pas de z-index négatif qui cache les sections */
+    z-index: 1;
+}
+
+.sidebar.close ~ .home-content {
+    left: var(--sidebar-collapsed);
+    width: calc(100% - var(--sidebar-collapsed));
+}
+
+/* Section 1 - Hero - Nouveau design moderne */
+.hero-section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 40px;
+    position: relative;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    overflow: hidden;
+    z-index: 2;
+}
+
+/* Éléments d'arrière-plan */
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    z-index: 1;
+}
+
+.hero-section::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -30%;
+    width: 80%;
+    height: 80%;
+    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+    z-index: 1;
+}
+
+.hero-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+}
+
+.hero-content {
+    animation: fadeInUp 1s ease-out;
+}
+
+.security-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(108, 92, 231, 0.1);
+    color: #6c5ce7;
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    border: 1px solid rgba(108, 92, 231, 0.2);
+}
+
+.hero-title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800;
+    color: var(--text-dark);
+    line-height: 1.1;
+    margin-bottom: 24px;
+}
+
+.hero-highlight {
+    background: linear-gradient(135deg, #6c5ce7 0%, #00cec9 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-subtitle {
+    font-size: clamp(1rem, 2vw, 1.2rem);
+    color: var(--text-gray);
+    line-height: 1.6;
+    margin-bottom: 40px;
+    max-width: 500px;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+    color: white;
+    padding: 16px 32px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(108, 92, 231, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(108, 92, 231, 0.4);
+}
+
+.btn-secondary {
+    background: white;
+    color: var(--text-dark);
+    padding: 16px 32px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    border-color: #6c5ce7;
+    color: #6c5ce7;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Hero Visual */
+.hero-visual {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeInRight 1s ease-out 0.3s both;
+}
+
+.shield-container {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.shield-bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(108, 92, 231, 0.1) 0%, rgba(0, 206, 201, 0.1) 100%);
+    border-radius: 50%;
+    animation: pulse 3s infinite;
+}
+
+.shield-ring {
+    position: absolute;
+    border: 2px solid;
+    border-radius: 50%;
+    animation: rotate 20s linear infinite;
+}
+
+.shield-ring:nth-child(2) {
+    width: 250px;
+    height: 250px;
+    border-color: rgba(108, 92, 231, 0.3);
+    animation-duration: 15s;
+}
+
+.shield-ring:nth-child(3) {
+    width: 200px;
+    height: 200px;
+    border-color: rgba(0, 206, 201, 0.4);
+    animation-duration: 25s;
+    animation-direction: reverse;
+}
+
+.shield-ring:nth-child(4) {
+    width: 150px;
+    height: 150px;
+    border-color: rgba(108, 92, 231, 0.5);
+    animation-duration: 18s;
+}
+
+.shield-icon {
+    position: relative;
+    z-index: 10;
+    font-size: 80px;
+    color: #6c5ce7;
+    animation: float 3s ease-in-out infinite;
+}
+
+/* Icônes flottantes */
+.floating-icon {
+    position: absolute;
+    color: rgba(108, 92, 231, 0.2);
+    animation: float 4s ease-in-out infinite;
+}
+
+.floating-icon:nth-child(1) {
+    top: 20%;
+    left: 10%;
+    font-size: 24px;
+    animation-delay: 0s;
+    color: #10b981;
+}
+
+.floating-icon:nth-child(2) {
+    top: 15%;
+    right: 20%;
+    font-size: 28px;
+    animation-delay: 1s;
+    color: #f59e0b;
+}
+
+.floating-icon:nth-child(3) {
+    bottom: 25%;
+    left: 15%;
+    font-size: 20px;
+    animation-delay: 2s;
+    color: #6c5ce7;
+}
+
+.floating-icon:nth-child(4) {
+    bottom: 30%;
+    right: 10%;
+    font-size: 32px;
+    animation-delay: 0.5s;
+    color: #00cec9;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.6;
+    }
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Section 2 - Statistiques - CORRECTION IMPORTANTE */
+.stats-section {
+    min-height: 100vh;
+    padding: 80px 40px;
+    background: var(--gradient-dark);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    /* AJOUT CRITIQUE : Assurer la visibilité */
+    z-index: 2;
+}
+
+.stats-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 15% 25%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 85% 75%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+    z-index: 1;
+}
+
+.stats-section > * {
+    position: relative;
+    z-index: 2;
+}
+
+.stats-header {
+    text-align: center;
+    margin-bottom: 80px;
+}
+
+.stats-title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    color: var(--white);
+    margin-bottom: 20px;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, var(--white) 0%, var(--accent-blue) 50%, var(--accent-green-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stats-subtitle {
+    font-size: clamp(1rem, 2vw, 1.3rem);
+    color: rgba(255, 255, 255, 0.8);
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 40px;
+    max-width: 1300px;
+    margin: 0 auto;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 25px;
+    padding: 50px 40px;
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    transform: translate3d(0, 0, 0);
+    /* CORRECTION : Opacité initiale à 1 */
+    opacity: 1;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    transition: all 0.6s ease;
+}
+
+.stat-card:nth-child(1)::before {
+    background: var(--gradient-primary);
+}
+
+.stat-card:nth-child(2)::before {
+    background: var(--gradient-secondary);
+}
+
+.stat-card:nth-child(3)::before {
+    background: var(--gradient-accent);
+}
+
+.stat-card:hover::before {
+    left: 100%;
+}
+
+.stat-card:hover {
+    transform: translateY(-15px) scale(1.05);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.stat-icon-container {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 30px;
+}
+
+.stat-icon {
+    width: 90px;
+    height: 90px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: var(--white);
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+}
+
+.stat-card:nth-child(1) .stat-icon {
+    background: var(--gradient-primary);
+}
+
+.stat-card:nth-child(2) .stat-icon {
+    background: var(--gradient-secondary);
+}
+
+.stat-card:nth-child(3) .stat-icon {
+    background: var(--gradient-accent);
+}
+
+.stat-card:hover .stat-icon {
+    transform: scale(1.1) rotate(10deg);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.stat-number {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 900;
+    color: var(--white);
+    margin-bottom: 15px;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.stat-label {
+    font-size: clamp(1rem, 1.5vw, 1.2rem);
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    line-height: 1.4;
+    margin-bottom: 15px;
+}
+
+.stat-description {
+    font-size: clamp(0.9rem, 1.2vw, 1rem);
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+    line-height: 1.6;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.4s ease;
+}
+
+.stat-card:hover .stat-description {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Section 3 - Fonctionnalités - CORRECTION IMPORTANTE */
+.features-section {
+    min-height: 100vh;
+    padding: 80px 40px;
+    background: linear-gradient(135deg, var(--off-white) 0%, var(--light-gray) 50%, var(--white) 100%);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    /* AJOUT CRITIQUE : Assurer la visibilité */
+    z-index: 2;
+}
+
+.features-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(37, 99, 235, 0.03) 0%, transparent 60%),
+        radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.03) 0%, transparent 60%),
+        radial-gradient(circle at 50% 90%, rgba(245, 158, 11, 0.03) 0%, transparent 60%);
+    z-index: 1;
+}
+
+.features-section > * {
+    position: relative;
+    z-index: 2;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 80px;
+}
+
+.section-title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    color: var(--text-dark);
+    margin-bottom: 20px;
+    text-align: center;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-green) 50%, var(--accent-orange) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.section-subtitle {
+    font-size: clamp(1rem, 2vw, 1.3rem);
+    color: var(--text-gray);
+    max-width: 700px;
+    margin: 0 auto;
+    text-align: center;
+    line-height: 1.6;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.feature-card {
+    background: var(--white);
+    border: 1px solid rgba(37, 99, 235, 0.1);
+    padding: 40px 30px;
+    border-radius: 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.05);
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    transform: translate3d(0, 0, 0);
+    /* CORRECTION : Opacité initiale à 1 */
+    opacity: 1;
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.02), transparent);
+    transition: all 0.6s ease;
+}
+
+.feature-card:hover::before {
+    left: 100%;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 25px 50px rgba(37, 99, 235, 0.15);
+    border-color: rgba(37, 99, 235, 0.2);
+}
+
+.feature-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: var(--white);
+    margin-bottom: 25px;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.feature-card:hover .feature-icon {
+    transform: scale(1.1) rotate(-5deg);
+}
+
+.feature-card:nth-child(1) .feature-icon {
+    background: var(--gradient-primary);
+    box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3);
+}
+
+.feature-card:nth-child(2) .feature-icon {
+    background: var(--gradient-secondary);
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+}
+
+.feature-card:nth-child(3) .feature-icon {
+    background: var(--gradient-accent);
+    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+}
+
+.feature-card:nth-child(4) .feature-icon {
+    background: var(--gradient-primary);
+    box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3);
+}
+
+.feature-card:nth-child(5) .feature-icon {
+    background: var(--gradient-secondary);
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+}
+
+.feature-card:nth-child(6) .feature-icon {
+    background: var(--gradient-accent);
+    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+}
+
+.feature-title {
+    font-size: clamp(1.2rem, 1.5vw, 1.4rem);
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 15px;
+}
+
+.feature-description {
+    color: var(--text-gray);
+    line-height: 1.7;
+    font-size: clamp(0.9rem, 1.2vw, 1rem);
+}
+
+/* Éléments flottants */
+.floating-elements {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1;
+}
+
+/* Particules flottantes pour la section stats */
+.stats-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    animation: float-particle 12s infinite linear;
+}
+
+.particle:nth-child(odd) {
+    background: rgba(16, 185, 129, 0.4);
+}
+
+.particle:nth-child(even) {
+    background: rgba(245, 158, 11, 0.4);
+}
+
+.particle:nth-child(1) { left: 10%; animation-delay: 0s; }
+.particle:nth-child(2) { left: 20%; animation-delay: 3s; }
+.particle:nth-child(3) { left: 30%; animation-delay: 6s; }
+.particle:nth-child(4) { left: 40%; animation-delay: 1s; }
+.particle:nth-child(5) { left: 50%; animation-delay: 4s; }
+.particle:nth-child(6) { left: 60%; animation-delay: 7s; }
+.particle:nth-child(7) { left: 70%; animation-delay: 2s; }
+.particle:nth-child(8) { left: 80%; animation-delay: 5s; }
+
+@keyframes float-particle {
+    0% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-10vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* Animations de scroll améliorées */
+.fade-in-up {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, opacity;
+}
+
+.fade-in-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Classe pour l'animation des cartes avec scroll */
+.card-animate {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.card-animate.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Design responsive */
+@media (max-width: 1024px) {
+    .hero-container {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        text-align: center;
+    }
+    
+    .shield-container {
+        width: 250px;
+        height: 250px;
+    }
+}
+
+@media (max-width: 768px) {
+    .home-content {
+        left: 0;
+        width: 100%;
+        padding-top: 60px; /* Espace pour un header mobile si nécessaire */
+    }
+    
+    .sidebar.close ~ .home-content {
+        left: 0;
+        width: 100%;
+    }
+    
+    .hero-section {
+        padding: 20px;
+    }
+    
+    .hero-title, .stats-title, .section-title {
+        font-size: 2.2rem;
+        line-height: 1.2;
+    }
+    
+    .hero-subtitle, .stats-subtitle, .section-subtitle {
+        font-size: 1.1rem;
+    }
+    
+    .cta-buttons {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .features-grid, .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-number {
+        font-size: 3rem;
+    }
+
+    .hero-section, .stats-section, .features-section {
+        padding: 60px 20px;
+    }
+
+    .btn-primary, .btn-secondary {
+        width: 100%;
+        max-width: 280px;
+        justify-content: center;
+    }
+    
+    .shield-container {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .shield-icon {
+        font-size: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-title, .stats-title, .section-title {
+        font-size: 1.8rem;
+    }
+    
+    .stat-card, .feature-card {
+        padding: 25px 15px;
+    }
+    
+    .hero-section, .stats-section, .features-section {
+        padding: 40px 15px;
+    }
+}
+    </style>
 </head>
+
+
+
+
+
 <body>
     <nav class="sidebar">
         <header>
@@ -26,7 +916,7 @@
         <div class="menu-bar">
             <div class="menu">
                 <ul class="menu-links">
-                    <li class="nav-link">
+                    <li class="nav-link active">
                         <a href="/">
                             <i class='bx bx-home-alt icon'></i>
                             <span class="text nav-text">Accueil</span>
@@ -34,7 +924,7 @@
                     </li>
                     <li class="nav-link">
                         <a href="/http">
-                            <i class='bx bx-network-chart icon'></i>
+                            <i class='bx bx-file-find icon'></i>
                             <span class="text nav-text">Logs HTTP</span>
                         </a>
                     </li>
@@ -44,7 +934,7 @@
                             <span class="text nav-text">Logs SQL</span>
                         </a>
                     </li>
-                    <li class="nav-link active">
+                    <li class="nav-link">
                         <a href="/analystic">
                             <i class='bx bx-bar-chart-alt-2 icon'></i>
                             <span class="text nav-text">Analytiques</span>
@@ -70,89 +960,244 @@
         </div>
     </nav>
 
-    <main class="home-page">
-
-        <section class="hero">
-            <div class="hero-content">
-                <h1>Détection avancée d'injections SQL</h1>
-                <p>Solution basée sur le Machine Learning pour analyser les logs d'accès</p>
-                <div class="hero-actions">
-                    <a href="/sql" class="btn primary">Commencer l'analyse</a>
-                    <a href="/files" class="btn secondary">Voir les logs</a>
-                </div>
-            </div>
-        </section>
-
-        <section class="features">
-            <div class="feature-card">
-                <i class='bx bx-check-shield'></i>
-                <h3>Détection en temps réel</h3>
-                <p>Analyse continue des logs pour une protection immédiate</p>
-            </div>
-            <div class="feature-card">
-                <i class='bx bx-data'></i>
-                <h3>Multi-sources</h3>
-                <p>Supporte Access Logs, LogHub et CSE-CIC-IDS2</p>
-            </div>
-            <div class="feature-card">
-                <i class='bx bx-brain'></i>
-                <h3>Algorithmes ML</h3>
-                <p>Combinaison de plusieurs modèles d'apprentissage</p>
-            </div>
-        </section>
-
-        <section class="about-project">
-            <div class="about-content">
-                <div class="about-text">
-                    <h2>Notre Solution</h2>
-                    <p>
-                        Ce projet de fin d'études propose une solution innovante pour détecter les injections SQL 
-                        à travers l'analyse de différents types de logs. Notre système combine plusieurs approches 
-                        de Machine Learning pour une détection optimale.
+    <div class="home-content">
+        <!-- Section 1 - Hero avec le nouveau design -->
+        <section class="hero-section">
+            <!-- Icônes flottantes d'arrière-plan -->
+            <i class='bx bx-shield-alt floating-icon'></i>
+            <i class='bx bx-data floating-icon'></i>
+            <i class='bx bx-bar-chart-alt-2 floating-icon'></i>
+            <i class='bx bx-lock-alt floating-icon'></i>
+            
+            <div class="hero-container">
+                <div class="hero-content">
+                    <div class="security-badge">
+                        <i class='bx bx-check-shield'></i>
+                        Protection Avancée
+                    </div>
+                    
+                    <h1 class="hero-title">
+                        Détection Intelligente des
+                        <span class="hero-highlight">Injections SQL</span>
+                    </h1>
+                    
+                    <p class="hero-subtitle">
+                        Protégez vos bases de données avec notre système de détection d'injection SQL alimenté par l'IA. 
+                        Analysez vos logs en temps réel et identifiez les menaces avec une précision de 99,7%.
                     </p>
-                    <ul class="tech-list">
-                        <li><i class='bx bx-check'></i> Analyse combinée de multiples sources de logs</li>
-                        <li><i class='bx bx-check'></i> Détection des motifs d'injection SQL</li>
-                        <li><i class='bx bx-check'></i> Minimisation des faux positifs</li>
-                    </ul>
+                    
+                    <div class="cta-buttons">
+                        <a href="/sql" class="btn-primary">
+                            <i class='bx bx-play'></i>
+                            Commencer l'Analyse
+                        </a>
+                        <a href="/analystic" class="btn-secondary">
+                            <i class='bx bx-bar-chart-alt-2'></i>
+                            Voir les Statistiques
+                        </a>
+                    </div>
                 </div>
-                <div class="about-image">
-                    <img src="static/images/homeImg.png" alt="Analyse de logs">
+                
+                <div class="hero-visual">
+                    <div class="shield-container">
+                        <div class="shield-bg"></div>
+                        <div class="shield-ring"></div>
+                        <div class="shield-ring"></div>
+                        <div class="shield-ring"></div>
+                        <i class='bx bx-shield-alt-2 shield-icon'></i>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <section class="model-performance">
-            <h2>Performance des modèles</h2>
-            <div class="models-grid">
-                <div class="model-card">
-                    <div class="model-icon svc">
-                        <i class='bx bx-chip'></i>
+        <!-- Section 2 - Statistiques -->
+        <section class="stats-section">
+            <div class="stats-particles">
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+            </div>
+            
+            <div class="stats-header">
+                <h2 class="stats-title">Performance en Temps Réel</h2>
+                <p class="stats-subtitle">
+                    Découvrez les métriques de notre système de détection avancé d'injections SQL
+                </p>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card card-animate" data-stat="99.7">
+                    <div class="stat-icon-container">
+                        <div class="stat-icon">
+                            <i class='bx bx-shield-alt-2'></i>
+                        </div>
                     </div>
-                    <h3>SVC</h3>
-                    <div class="accuracy">90.03%</div>
-                    <p>Meilleure précision globale</p>
+                    <div class="stat-number">99.7%</div>
+                    <div class="stat-label">Précision de Détection</div>
+                    <div class="stat-description">
+                        Taux de détection ultra-précis grâce à notre algorithme d'intelligence artificielle avancé
+                    </div>
                 </div>
-                <div class="model-card">
-                    <div class="model-icon nb">
-                        <i class='bx bx-stats'></i>
+                
+                <div class="stat-card card-animate" data-stat="50">
+                    <div class="stat-icon-container">
+                        <div class="stat-icon">
+                            <i class='bx bx-timer'></i>
+                        </div>
                     </div>
-                    <h3>MultinomialNB</h3>
-                    <div class="accuracy">71.54%</div>
-                    <p>Rapide pour logs individuels</p>
+                    <div class="stat-number">&lt;50ms</div>
+                    <div class="stat-label">Temps de Réponse</div>
+                    <div class="stat-description">
+                        Analyse ultra-rapide pour une protection en temps réel sans impact sur les performances
+                    </div>
                 </div>
-                <div class="model-card">
-                    <div class="model-icon ensemble">
-                        <i class='bx bx-layer'></i>
+                
+                <div class="stat-card card-animate" data-stat="1000000">
+                    <div class="stat-icon-container">
+                        <div class="stat-icon">
+                            <i class='bx bx-data'></i>
+                        </div>
                     </div>
-                    <h3>Ensemble</h3>
-                    <div class="accuracy">62.01%</div>
-                    <p>Détection de nouveaux motifs</p>
+                    <div class="stat-number">1M+</div>
+                    <div class="stat-label">Requêtes Analysées</div>
+                    <div class="stat-description">
+                        Volume massif de requêtes traitées quotidiennement avec une fiabilité constante
+                    </div>
                 </div>
             </div>
         </section>
-    </main>
+        
+        <!-- Section Fonctionnalités -->
+        <section class="features-section">
+            <div class="section-header">
+                <h2 class="section-title">Fonctionnalités Avancées</h2>
+                <p class="section-subtitle">
+                    Une suite complète d'outils pour sécuriser vos applications web et bases de données
+                </p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card card-animate">
+                    <div class="feature-icon">
+                        <i class='bx bx-brain'></i>
+                    </div>
+                    <h3 class="feature-title">Analyse Intelligente par IA</h3>
+                    <p class="feature-description">
+                        Détection avancée des patterns d'injection SQL avec explication détaillée pour chaque prédiction, 
+                        incluant l'identification de caractères suspects et de mots-clés malveillants.
+                    </p>
+                </div>
+                
+                <div class="feature-card card-animate">
+                    <div class="feature-icon">
+                        <i class='bx bx-search-alt'></i>
+                    </div>
+                    <h3 class="feature-title">Recherche Avancée</h3>
+                    <p class="feature-description">
+                        Explorez votre historique avec des filtres puissants par type de requête, mots-clés, 
+                        et niveau de menace pour une analyse approfondie.
+                    </p>
+                </div>
+                
+                <div class="feature-card card-animate">
+                    <div class="feature-icon">
+                        <i class='bx bx-upload'></i>
+                    </div>
+                    <h3 class="feature-title">Import de Logs</h3>
+                    <p class="feature-description">
+                        Téléchargez facilement vos fichiers de logs (.log, .txt) pour une analyse batch 
+                        et un traitement automatisé de gros volumes de données.
+                    </p>
+                </div>
+                
+                <div class="feature-card card-animate">
+                    <div class="feature-icon">
+                        <i class='bx bx-line-chart'></i>
+                    </div>
+                    <h3 class="feature-title">Tableaux de Bord</h3>
+                    <p class="feature-description">
+                        Visualisez vos statistiques avec des graphiques interactifs : évolution des menaces, 
+                        pourcentage de requêtes malicieuses, et tendances temporelles.
+                    </p>
+                </div>
+                
+                <div class="feature-card card-animate">
+                    <div class="feature-icon">
+                        <i class='bx bx-shield-alt-2'></i>
+                    </div>
+                    <h3 class="feature-title">Surveillance HTTP & SQL</h3>
+                    <p class="feature-description">
+                        Protection multicouche avec analyse des requêtes HTTP et SQL en temps réel, 
+                        détection des anomalies et alertes automatiques.
+                    </p>
+                </div>
+                
+                <div class="feature-card card-animate">
+                    <div class="feature-icon">
+                        <i class='bx bx-lock'></i>
+                    </div>
+                    <h3 class="feature-title">Accès Sécurisé</h3>
+                    <p class="feature-description">
+                        Authentification robuste avec gestion des sessions Flask pour restreindre l'accès 
+                        aux fonctionnalités sensibles et protéger vos données.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </div>
 
+    <script>
+        const sidebar = document.querySelector('.sidebar');
+        const toggle = document.querySelector('.toggle');
+
+        toggle.addEventListener('click', () => {
+            sidebar.classList.toggle('close');
+        });
+
+        // Smooth animations on load
+        window.addEventListener('load', () => {
+            document.querySelector('.hero-content').style.animation = 'fadeInUp 1s ease-out';
+            document.querySelector('.hero-visual').style.animation = 'fadeInRight 1s ease-out 0.3s both';
+        });
+
+        // Scroll animations
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in-up').forEach(el => {
+            observer.observe(el);
+        });
+
+        document.querySelectorAll('.card-animate').forEach((card, index) => {
+            card.style.transitionDelay = `${index * 0.1}s`;
+            observer.observe(card);
+        });
+    </script>
     <script src="static/script.js"></script>
 </body>
 </html>

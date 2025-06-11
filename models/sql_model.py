@@ -13,7 +13,7 @@ import numpy as np
 import re
 import json
 
-model_dir = "saved_models/all_models"
+model_dir = "saved_models/all_Sql_models"
 stats_file = "saved_models/model_stats.json"
 MODELS = ["randomforest", "svm", "logisticregression"]
 

@@ -53,7 +53,7 @@ def predict_sql_route():
     query = data.get("query", "")
     selected_model = data.get("model", "randomforest").lower()
 
-    model_path = f"saved_models/all_models/{selected_model}_model.pkl"
+    model_path = f"saved_models/all_Sql_models/{selected_model}_model.pkl"
 
     print(f"MODEL PATH UTILISÉ DANS FLASK : {model_path}")
 

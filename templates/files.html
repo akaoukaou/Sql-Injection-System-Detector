@@ -5,124 +5,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Gestion des Fichiers | SQL Shield</title>
     <link rel="stylesheet" href="/static/style.css" />
-    <link rel="stylesheet" href="/static/sql.css" /> 
-    <link rel="stylesheet" href="/static/files.css" />
     <link href="https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css" rel="stylesheet" />
 </head>
 
 <body>
     <!-- Barre latérale -->
-    <nav class="sidebar" aria-label="Barre de navigation principale">
+    <nav class="sidebar">
         <header>
             <div class="image-text">
                 <span class="image">
-                    <img src="/static/images/logo.png" alt="Logo SQL Shield" />
+                    <img src="/static/images/logo.png" alt="Logo SQL Shield">
                 </span>
                 <div class="text logo-text">
-                    <span class="name">SQL App</span>
-                    <span class="profession">Analyser</span>
+                    <span class="name">SQL Shield</span>
+                    <span class="profession">Security Analyzer</span>
                 </div>
             </div>
-            <i class="bx bx-chevron-right toggle" role="button" aria-label="Basculer le menu"></i>
+            <i class='bx bx-chevron-right toggle'></i>
         </header>
 
         <div class="menu-bar">
             <div class="menu">
                 <ul class="menu-links">
-                    <li><a href="/"><i class="bx bx-home-alt icon"></i><span class="text nav-text">Accueil</span></a></li>
-                    <li><a href="/http"><i class="bx bx-network-chart icon"></i><span class="text nav-text">Logs HTTP</span></a></li>
-                    <li><a href="/sql"><i class="bx bx-shield-alt icon"></i><span class="text nav-text">Analyse SQL</span></a></li>
-                    <li class="nav-link active"><a href="/analystic"><i class="bx bx-bar-chart-alt-2 icon"></i><span class="text nav-text">Analytiques</span></a></li>
-                    <li><a href="/files"><i class="bx bx-data icon"></i><span class="text nav-text">Sources</span></a></li>
+                    <li class="nav-link">
+                        <a href="/">
+                            <i class='bx bx-home-alt icon'></i>
+                            <span class="text nav-text">Accueil</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="/http">
+                            <i class='bx bx-file-find icon'></i>
+                            <span class="text nav-text">Logs HTTP</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="/sql">
+                            <i class='bx bx-shield-alt icon'></i>
+                            <span class="text nav-text">Logs SQL</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="/analystic">
+                            <i class='bx bx-bar-chart-alt-2 icon'></i>
+                            <span class="text nav-text">Analytiques</span>
+                        </a>
+                    </li>
+                    <li class="nav-link active">
+                        <a href="/files">
+                            <i class='bx bx-data icon'></i>
+                            <span class="text nav-text">Sources</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
 
             <div class="bottom-content">
-                <ul>
-                    <li><a href="/login"><i class="bx bx-log-out icon"></i><span class="text nav-text">Déconnexion</span></a></li>
-                </ul>
+                <li class="">
+                    <a href="/settings">
+                        <i class='bx bx-cog icon'></i>
+                        <span class="text nav-text">Paramètres</span>
+                    </a>
+                </li>
+                <li class="">
+                    <a href="/login">
+                        <i class='bx bx-log-out icon'></i>
+                        <span class="text nav-text">Déconnexion</span>
+                    </a>
+                </li>
             </div>
         </div>
     </nav>
 
-    <main class="sql-content" role="main">
-        <div class="header">
-            <h1>Gestion des Sources de Logs</h1>
-            <p class="subtitle">Importez et gérez vos fichiers de logs</p>
-        </div>
 
-        <div class="files-container">
-            <!-- Carte d'upload -->
-            <div class="files-card">
-                <h2><i class='bx bx-cloud-upload'></i> Importer des logs</h2>
-                <div class="drop-zone" id="dropZone">
-                    <i class='bx bx-file'></i>
-                    <p>Glissez-déposez vos fichiers ici ou cliquez pour sélectionner</p>
-                    <input type="file" id="fileInput" multiple style="display: none;" accept=".log,.csv,.json,.txt">
-                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                        <i class='bx bx-upload'></i> Parcourir
-                    </button>
-                </div>
-                <div class="upload-progress" id="uploadProgress"></div>
-            </div>
-
-            <!-- Liste des fichiers -->
-            <div class="files-card">
-                <h2><i class='bx bx-folder-open'></i> Fichiers disponibles</h2>
-                <div class="file-actions">
-                    <div class="search-box">
-                        <i class='bx bx-search'></i>
-                        <input type="text" placeholder="Rechercher un fichier..." id="searchInput">
-                    </div>
-                    <div class="sort-options">
-                        <span>Trier par :</span>
-                        <select id="sortSelect">
-                            <option value="name">Nom</option>
-                            <option value="date">Date</option>
-                            <option value="size">Taille</option>
-                        </select>
-                    </div>
-                </div>
-                <table class="files-table">
-                    <thead>
-                        <tr>
-                            <th>Nom</th>
-                            <th>Type</th>
-                            <th>Taille</th>
-                            <th>Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="filesTableBody">
-                        <tr>
-                            <td><i class='bx bx-file'></i>access.log</td>
-                            <td>Apache Log</td>
-                            <td>2.4 MB</td>
-                            <td>24/05/2025 10:30</td>
-                            <td>
-                                <button class="action-btn analyze-btn" onclick="analyzeFile()">
-                                    <i class='bx bx-shield-alt'></i>
-                                </button>
-                                <button class="action-btn download-btn" onclick="downloadFile()">
-                                    <i class='bx bx-download'></i>
-                                </button>
-                                <button class="action-btn delete-btn" onclick="deleteFile()">
-                                    <i class='bx bx-trash'></i>
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="pagination">
-                    <button class="pagination-btn" disabled><i class='bx bx-chevron-left'></i></button>
-                    <span>Page 1</span>
-                    <button class="pagination-btn"><i class='bx bx-chevron-right'></i></button>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <script src="/static/files.js"></script>
     <script src="/static/script.js"></script>
 </body>
 </html>

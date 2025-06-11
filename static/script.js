@@ -271,67 +271,7 @@ function addToHistory(query, result, type = 'sql') {
     historyTable.prepend(newRow);
 }
 
-// Initialisation des graphiques
-function initCharts() {
-    // Graphique 1 : Répartition des types d'attaques
-    const ctx1 = document.getElementById('attacksByTypeChart').getContext('2d');
-    new Chart(ctx1, {
-        type: 'doughnut',
-        data: {
-            labels: ['SQL Injection', 'XSS', 'Path Traversal', 'LFI', 'Autres'],
-            datasets: [{
-                data: [65, 15, 10, 5, 5],
-                backgroundColor: [
-                    '#4361ee',
-                    '#3f37c9',
-                    '#4cc9f0',
-                    '#4895ef',
-                    '#f72585'
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'right'
-                }
-            }
-        }
-    });
-
-    // Graphique 2 : Précision sur 30 jours
-    const ctx2 = document.getElementById('accuracyOverTimeChart').getContext('2d');
-    new Chart(ctx2, {
-        type: 'line',
-        data: {
-            labels: Array.from({length: 30}, (_, i) => `J-${30-i}`),
-            datasets: [{
-                label: 'Précision SVC',
-                data: Array.from({length: 30}, () => Math.random() * 10 + 85),
-                borderColor: '#4361ee',
-                tension: 0.3,
-                fill: false
-            }, {
-                label: 'Précision MultinomialNB',
-                data: Array.from({length: 30}, () => Math.random() * 10 + 65),
-                borderColor: '#3f37c9',
-                tension: 0.3,
-                fill: false
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    min: 50,
-                    max: 100
-                }
-            }
-        }
-    });
-}
-
 function bientot(fileId) {
     alert('Fonctionnalité bientôt disponible !');
 }
+
