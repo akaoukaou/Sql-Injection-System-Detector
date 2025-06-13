@@ -10,6 +10,7 @@
 </head>
 
 <body>
+    <!--Sidebar Section -->
     <nav class="sidebar">
         <header>
             <div class="image-text">
@@ -94,7 +95,7 @@
                 <h2><i class='bx bx-brain'></i>Configuration du Modèle</h2>
                 <div>
                     <span class="best-label">The Best ⭐</span>
-                    <span class="best-label">{{ best_model }}</span>
+                    <span class="best-label">{{ sql_best_model }}</span>
                 </div>
             </div>
 
@@ -105,7 +106,7 @@
                         Algorithme de détection
                     </label>
                     <div class="model-selector-container">
-                        <select class="model-select" id="model-selector">
+                        <select class="model-select" id="sql-model-selector">
                             <option value="randomforest" selected>Random Forest</option>
                             <option value="svm">Support Vector Machine SVM</option>
                             <option value="logisticregression">Logistic Regression</option>
@@ -120,7 +121,7 @@
                             <span>Précision Entraînement</span>
                         </div>
                         <div class="metric-content">
-                            <div class="metric-value" id="stat-train">--</div>
+                            <div class="metric-value" id="sql-stat-train">--</div>
                             <div class="metric-unit">%</div>
                         </div>
                     </div>
@@ -131,7 +132,7 @@
                             <span>Précision Validation</span>
                         </div>
                         <div class="metric-content">
-                            <div class="metric-value" id="stat-val">--</div>
+                            <div class="metric-value" id="sql-stat-val">--</div>
                             <div class="metric-unit">%</div>
                         </div>
                     </div>
@@ -142,7 +143,7 @@
                             <span>Test Accuracy</span>
                         </div>
                         <div class="metric-content">
-                            <div class="metric-value" id="stat-test-accuracy">--</div>
+                            <div class="metric-value" id="sql-stat-test-accuracy">--</div>
                             <div class="metric-unit">%</div>
                         </div>
                     </div>
@@ -153,7 +154,7 @@
                             <span>Temps d'entraînement</span>
                         </div>
                         <div class="metric-content">
-                            <div class="metric-value" id="stat-time">--</div>
+                            <div class="metric-value" id="sql-stat-time">--</div>
                             <div class="metric-unit">s</div>
                         </div>
                     </div>
@@ -164,7 +165,7 @@
                             <span>Precision</span>
                         </div>
                         <div class="metric-content">
-                            <div class="metric-value" id="stat-precision">--</div>
+                            <div class="metric-value" id="sql-stat-precision">--</div>
                             <div class="metric-unit">%</div>
                         </div>
                     </div>
@@ -175,7 +176,7 @@
                             <span>Recall</span>
                         </div>
                         <div class="metric-content">
-                            <div class="metric-value" id="stat-recall">--</div>
+                            <div class="metric-value" id="sql-stat-recall">--</div>
                             <div class="metric-unit">%</div>
                         </div>
                     </div>
@@ -186,14 +187,11 @@
                             <span>F1-score</span>
                         </div>
                         <div class="metric-content">
-                            <div class="metric-value" id="stat-f1">--</div>
+                            <div class="metric-value" id="sql-stat-f1">--</div>
                             <div class="metric-unit">%</div>
                         </div>
                     </div>
-
                 </div>
-
-
             </div>
 
             <div class="input-section">
@@ -210,7 +208,7 @@
                     </div>
                 </div>
                 <div class="textarea-wrapper">
-                    <textarea id="query" placeholder="Entrez votre requête SQL ici..." spellcheck="false"></textarea>
+                    <textarea id="sql-query" placeholder="Entrez votre requête SQL ici..." spellcheck="false"></textarea>
                 </div>
                 
             </div>
@@ -231,9 +229,9 @@
                 </div>
             </div>
 
-            <div id="result-container" class="result-container">
+            <div id="sql-result-container" class="result-container">
                 <!-- Résultat Danger -->
-                <div class="result-card danger" id="result-danger">
+                <div class="result-card danger" id="sql-result-danger">
                     <div class="result-icon">
                         <i class='bx bx-error-circle'></i>
                     </div>
@@ -245,15 +243,14 @@
                             <div class="attack-info">
                                 <span class="attack-solution">
                                     <i class='bx bx-shield'></i> Solution : 
-                                    <strong>Utiliser des requêtes préparées (prepared statements)</strong>
+                                    <strong>(en cours de dev!)</strong>
                                 </span>
                             </div>
                         </div>
                     </div>
                 </div>
-
                 <!-- Résultat Safe -->
-                <div class="result-card safe" id="result-safe">
+                <div class="result-card safe" id="sql-result-safe">
                     <div class="result-icon">
                         <i class='bx bx-check-circle'></i>
                     </div>
@@ -266,8 +263,8 @@
                         </div>
                     </div>
                 </div>
-
             </div>
+
         </section>
 
         <!-- History Section -->

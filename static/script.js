@@ -1,12 +1,13 @@
-//JavaScript Functions
+// Helper function to set the content if the element exists
 function setIfExist(id, value) {
     const el = document.getElementById(id);
     if (el) el.textContent = value || "--";
 }
 
-async function updateModelStats(modelName) {
+// Fonction pour mettre à jour les statistiques des modèles (SQL, HTTP, ...)
+async function updateModelStats(modelName, type) {
     try {
-        const res = await fetch(`/model-info?model=${modelName}`);
+        const res = await fetch(`/model-info?model=${modelName}&type=${type}`);
         const data = await res.json();
 
         if (data.error) {
@@ -14,115 +15,88 @@ async function updateModelStats(modelName) {
             return;
         }
 
-        setIfExist("stat-train", data.train_accuracy);
-        setIfExist("stat-val", data.val_accuracy);
-        setIfExist("stat-time", data.training_time);
+        setIfExist(`${type}-stat-train`, data.train_accuracy);
+        setIfExist(`${type}-stat-val`, data.val_accuracy);
+        setIfExist(`${type}-stat-time`, data.training_time);
 
-        setIfExist("stat-test-accuracy", data.test_accuracy);
-        setIfExist("stat-precision", data.precision);
-        setIfExist("stat-recall", data.recall);
-        setIfExist("stat-f1", data.f1_score);
-        
+        setIfExist(`${type}-stat-test-accuracy`, data.test_accuracy);
+        setIfExist(`${type}-stat-precision`, data.precision);
+        setIfExist(`${type}-stat-recall`, data.recall);
+        setIfExist(`${type}-stat-f1`, data.f1_score);
+
     } catch (err) {
         console.error("Erreur récupération stats:", err);
     }
 }
 
-
-function initModelSelector() {
-    const modelSelector = document.getElementById("model-selector");
+// Fonction pour initialiser les sélecteurs de modèles (SQL, HTTP, ...)
+function initModelSelector(type) {
+    const modelSelector = document.getElementById(`${type}-model-selector`);
     if (!modelSelector) return;
 
     modelSelector.addEventListener("change", function () {
         const selected = this.value;
-        updateModelStats(selected);
+        updateModelStats(selected, type);  // Passer le type dynamique (http ou sql)
     });
 
     const initialModel = modelSelector.value;
-    updateModelStats(initialModel);
+    updateModelStats(initialModel, type);  // Initialiser avec le modèle par défaut
 }
 
+// Fonction générique pour afficher le résultat (Danger ou Safe)
+function displayResult(type, result) {
+    const resultContainer = document.getElementById(`${type}-result-container`);
+    const resultDanger = document.getElementById(`${type}-result-danger`);
+    const resultSafe = document.getElementById(`${type}-result-safe`);
 
-//SQL Function
-async function analyzeSQL() {
-    const input = document.getElementById('query').value.trim();
-    const resultContainer = document.getElementById('result-container');
-    const predictBtn = document.getElementById('sql-predict-btn');
-    const selectedModel = document.getElementById('model-selector').value;
-
-    document.querySelectorAll('.result-card').forEach(el => {
-        el.style.display = 'none';
-    });
+    resultDanger.style.display = 'none';
+    resultSafe.style.display = 'none';
     resultContainer.style.display = 'none';
-    
-    if (!input) {
-        alert('❌ Veuillez entrer une requête SQL');
+
+    if (result === 1) {
+        resultDanger.style.display = 'block';
+    } else if (result === 0) {
+        resultSafe.style.display = 'block';
+    }
+
+    resultContainer.style.display = 'block';
+}
+
+// Fonction générique pour analyser la requête (HTTP, SQL, etc.)
+async function analyzeQuery(type) {
+    const query = document.getElementById(`${type}-query`).value.trim();
+    const selectedModel = document.getElementById(`${type}-model-selector`).value;
+    const resultContainer = document.getElementById(`${type}-result-container`);
+    const predictBtn = document.getElementById(`${type}-predict-btn`);
+
+    if (!query) {
+        alert(`❌ Veuillez entrer une requête ${type.toUpperCase()}`);
         return;
     }
+
     try {
+        // Désactiver le bouton de prédiction et afficher un loader
         predictBtn.disabled = true;
         predictBtn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Analyse...';
-        
-        const response = await fetch('/predict-sql', {
+
+        const response = await fetch(`/predict-${type}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: input, model: selectedModel })
+            body: JSON.stringify({ query: query, model: selectedModel })
         });
+
         if (!response.ok) {
             throw new Error(`Erreur HTTP: ${response.status}`);
         }
+
         const data = await response.json();
+
         if (data.error) {
             throw new Error(data.error);
         }
 
-        // Show results
-        resultContainer.style.display = 'block';
-        document.getElementById(data.result === 1 ? 'result-danger' : 'result-safe').style.display = 'flex';
-        addToHistory(input, data.result, 'sql');
-        
-    } catch (error) {
-        console.error('Erreur:', error);
-        alert(`❌ ${error.message || 'Erreur lors de l\'analyse'}`);
-    } finally {
-        predictBtn.disabled = false;
-        predictBtn.innerHTML = '<i class="bx bx-search-alt"></i> Analyser';
-    }
-}
-
-async function analyzeHttp() {
-    const input = document.getElementById('query').value.trim();
-    const resultContainer = document.getElementById('result-container');
-    const predictBtn = document.getElementById('http-predict-btn');
-
-    document.querySelectorAll('.result-card').forEach(el => {
-        el.style.display = 'none';
-    });
-    resultContainer.style.display = 'none';
-    if (!input) {
-        alert('❌ Veuillez entrer une requête HTTP');
-        return;
-    }
-    try {
-        predictBtn.disabled = true;
-        predictBtn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Analyse...';
-        const response = await fetch('/predict-http', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: input })
-        });
-        if (!response.ok) {
-            throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-        const data = await response.json();
-        if (data.error) {
-            throw new Error(data.error);
-        }
-
-        // Show results
-        resultContainer.style.display = 'block';
-        document.getElementById(data.result === 1 ? 'result-danger' : 'result-safe').style.display = 'flex';
-        addToHistory(input, data.result, 'http');
+        displayResult(type, data.result);
+        addToHistory(query, data.result, type);
 
     } catch (error) {
         console.error('Erreur:', error);
@@ -144,31 +118,30 @@ function escapeHtml(unsafe) {
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 // Main
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 document.addEventListener('DOMContentLoaded', () => {
-
     initSidebar();
-    
-    initModelSelector();
 
-    // Gestion des boutons d'analyse
-    document.getElementById('sql-predict-btn')?.addEventListener('click', () => analyzeSQL());
-    document.getElementById('http-predict-btn')?.addEventListener('click', () => analyzeHttp());
-    
-    //charts
+    // Initialiser les sélecteurs de modèles pour HTTP et SQL
+    initModelSelector('http');
+    initModelSelector('sql');
+
+    // Gestion des boutons d'analyse SQL et HTTP
+    document.getElementById('sql-predict-btn')?.addEventListener('click', () => analyzeQuery('sql'));
+    document.getElementById('http-predict-btn')?.addEventListener('click', () => analyzeQuery('http'));
+
+
+    // Charts (sur la page /analystic)
     if (window.location.pathname.includes('/analystic')) initCharts();
-
-    
 });
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//sideBar
+//SideBar Initialisation
 function initSidebar() {
     const sidebar = document.querySelector('.sidebar');
     const toggle = document.querySelector('.toggle');
@@ -198,29 +171,34 @@ function addToHistory(query, result, type = 'sql') {
     if (!historyTable) return;
 
     // Trouver le modèle sélectionné
-    const selectedModel = document.getElementById('model-selector')?.value || 'svm';
-    // Générer un label de modèle friendly
+    const selectedModel = document.getElementById(`${type}-model-selector`)?.value || 'svm';  // Utiliser le type ici
     let modelLabel = '';
     let modelClass = '';
-    switch(selectedModel) {
-        case 'svm':
-            modelLabel = 'SVM';
-            modelClass = 'svm';
-            break;
-        case 'randomforest':
-            modelLabel = 'Random Forest';
-            modelClass = 'rf';
-            break;
-        case 'logisticregression':
-            modelLabel = 'Logistic Regression';
-            modelClass = 'lr';
-            break;
-        default:
-            modelLabel = selectedModel;
-            modelClass = '';
-    }
 
-    // Générer un nouvel ID (ex: #003)
+    switch (selectedModel) {
+    case 'randomforest':
+        modelLabel = 'Random Forest';
+        modelClass = 'rf';
+        break;
+    case 'svm':
+        modelLabel = 'SVM';
+        modelClass = 'svm';
+        break;
+    case 'logisticregression':
+        modelLabel = 'Logistic Regression';
+        modelClass = 'lr';
+        break;
+    case 'gradientboosting':
+        modelLabel = 'Gradient Boosting';
+        modelClass = 'lr';
+        break;
+    default:
+        modelLabel = selectedModel;
+        modelClass = '';
+}
+
+
+    // Générer un nouvel ID pour l'historique (ex: #003)
     let newId = 1;
     const rows = historyTable.querySelectorAll('tr');
     if (rows.length > 0) {
@@ -236,7 +214,7 @@ function addToHistory(query, result, type = 'sql') {
     }
     const idString = '#' + newId.toString().padStart(3, '0');
 
-    // Affichage résultat
+    // Affichage du résultat
     const isDanger = result === 1;
     const resultBadge = isDanger
         ? `<span class="status-badge danger"><i class='bx bx-error-circle'></i> Menace</span>`

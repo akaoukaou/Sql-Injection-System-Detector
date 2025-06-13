@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTTP Détection</title>
+    <title>Http Détection</title>
     <link rel="stylesheet" href="/static/sql.css">
     <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 
 <body>
+    <!--Sidebar Section -->
     <nav class="sidebar">
         <header>
             <div class="image-text">
@@ -82,8 +83,8 @@
         <header class="page-header">
             <div class="header-content">
                 <div class="header-title">
-                    <h1>Analyse de Logs HTTP </h1>
-                    <p class="subtitle">Analysez vos requêtes HTTP en temps réel avec l'intelligence artificielle 🚀</p>
+                    <h1>Analyse de Logs Http </h1>
+                    <p class="subtitle">Analysez vos requêtes SQL en temps réel avec l'intelligence artificielle 🚀</p>
                 </div>
             </div>
         </header>
@@ -91,10 +92,10 @@
         <!-- Analysis Panel -->
         <section class="analysis-panel">
             <div class="panel-header">
-                <h2><i class='bx bx-brain'></i> Configuration du Modèle</h2>
+                <h2><i class='bx bx-brain'></i>Configuration du Modèle</h2>
                 <div>
                     <span class="best-label">The Best ⭐</span>
-                    <span class="best-label">{{ best_model }}</span>
+                    <span class="best-label">{{ http_best_model }}</span>
                 </div>
             </div>
 
@@ -104,22 +105,23 @@
                         <i class='bx bx-microchip'></i>
                         Algorithme de détection
                     </label>
-                    <select class="model-select" id="model-selector">
-                        <option value="svm">SVM (Support Vector Machine)</option>
-                        <option value="randomforest">Random Forest</option>
-                        <option value="logisticregression">Logistic Regression</option>
-                    </select>
+                    <div class="model-selector-container">
+                        <select class="model-select" id="http-model-selector">
+                            <option value="randomforest" selected>Random Forest</option>
+                            <!-- <option value="svm">SVM</option> !-->
+                            <option value="gradientboosting">Gradient Boosting</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="model-metrics">
-
                     <div class="metric-card">
                         <div class="metric-header">
                             <i class='bx bx-trending-up'></i>
                             <span>Précision Entraînement</span>
                         </div>
                         <div class="metric-content">
-                            <div class="metric-value" id="stat-train">--</div>
+                            <div class="metric-value" id="http-stat-train">--</div>
                             <div class="metric-unit">%</div>
                         </div>
                     </div>
@@ -130,7 +132,7 @@
                             <span>Précision Validation</span>
                         </div>
                         <div class="metric-content">
-                            <div class="metric-value" id="stat-val">--</div>
+                            <div class="metric-value" id="http-stat-val">--</div>
                             <div class="metric-unit">%</div>
                         </div>
                     </div>
@@ -141,7 +143,7 @@
                             <span>Test Accuracy</span>
                         </div>
                         <div class="metric-content">
-                            <div class="metric-value" id="stat-test-accuracy">--</div>
+                            <div class="metric-value" id="http-stat-test-accuracy">--</div>
                             <div class="metric-unit">%</div>
                         </div>
                     </div>
@@ -152,7 +154,7 @@
                             <span>Temps d'entraînement</span>
                         </div>
                         <div class="metric-content">
-                            <div class="metric-value" id="stat-time">--</div>
+                            <div class="metric-value" id="http-stat-time">--</div>
                             <div class="metric-unit">s</div>
                         </div>
                     </div>
@@ -163,7 +165,7 @@
                             <span>Precision</span>
                         </div>
                         <div class="metric-content">
-                            <div class="metric-value" id="stat-precision">--</div>
+                            <div class="metric-value" id="http-stat-precision">--</div>
                             <div class="metric-unit">%</div>
                         </div>
                     </div>
@@ -174,7 +176,7 @@
                             <span>Recall</span>
                         </div>
                         <div class="metric-content">
-                            <div class="metric-value" id="stat-recall">--</div>
+                            <div class="metric-value" id="http-stat-recall">--</div>
                             <div class="metric-unit">%</div>
                         </div>
                     </div>
@@ -185,20 +187,18 @@
                             <span>F1-score</span>
                         </div>
                         <div class="metric-content">
-                            <div class="metric-value" id="stat-f1">--</div>
+                            <div class="metric-value" id="http-stat-f1">--</div>
                             <div class="metric-unit">%</div>
                         </div>
                     </div>
-                    
                 </div>
-
             </div>
 
             <div class="input-section">
                 <div class="input-header">
-                    <label for="sql-query">
+                    <label for="Http-query">
                         <i class='bx bx-code-curly'></i> 
-                        Requête SQL à analyser
+                        Requête HTTP à analyser
                     </label>
                     <div class="input-actions">
                         <button type="button" class="btn-secondary" id="clear-btn">
@@ -208,7 +208,7 @@
                     </div>
                 </div>
                 <div class="textarea-wrapper">
-                    <textarea id="query" placeholder="Entrez votre requête SQL ici..." spellcheck="false"></textarea>
+                    <textarea id="http-query" placeholder="Entrez votre requête HTTP ici..." spellcheck="false"></textarea>
                 </div>
                 
             </div>
@@ -229,9 +229,9 @@
                 </div>
             </div>
 
-            <div id="result-container" class="result-container">
+            <div id="http-result-container" class="result-container">
                 <!-- Résultat Danger -->
-                <div class="result-card danger" id="result-danger">
+                <div class="result-card danger" id="http-result-danger">
                     <div class="result-icon">
                         <i class='bx bx-error-circle'></i>
                     </div>
@@ -243,15 +243,14 @@
                             <div class="attack-info">
                                 <span class="attack-solution">
                                     <i class='bx bx-shield'></i> Solution : 
-                                    <strong>Utiliser des requêtes préparées (prepared statements)</strong>
+                                    <strong>(en cours de dev!)</strong>
                                 </span>
                             </div>
                         </div>
                     </div>
                 </div>
-
                 <!-- Résultat Safe -->
-                <div class="result-card safe" id="result-safe">
+                <div class="result-card safe" id="http-result-safe">
                     <div class="result-icon">
                         <i class='bx bx-check-circle'></i>
                     </div>
@@ -264,8 +263,8 @@
                         </div>
                     </div>
                 </div>
-
             </div>
+
         </section>
 
         <!-- History Section -->
@@ -319,7 +318,7 @@
                             <td>#002</td>
                             <td class="query-cell">
                                 <div class="query-preview">
-                                    <code>GET /login.php?username=admin' OR '1'='1&password=1234</code>
+                                    <code>GET /login.php?username=admin' OR '1'='1&pass=1234</code>
                                 </div>
                             </td>
                             <td>

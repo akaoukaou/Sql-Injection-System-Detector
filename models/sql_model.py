@@ -14,7 +14,7 @@ import re
 import json
 
 model_dir = "saved_models/all_Sql_models"
-stats_file = "saved_models/model_stats.json"
+sql_stats_file = "saved_models/sql_model_stats.json"
 MODELS = ["randomforest", "svm", "logisticregression"]
 
 all_feature_names = [
@@ -27,16 +27,16 @@ all_feature_names = [
 ]
 
 models_already_trained = (
-    os.path.exists(stats_file)
+    os.path.exists(sql_stats_file)
     and all(os.path.exists(f"{model_dir}/{m}_model.pkl") for m in MODELS)
 )
 
 # 1. Charger et concaténer tous les fichiers
 print("🔄 Chargement des datasets Vue SQL...")
 try:
-    df_train = pd.read_csv("SQL_Injec_NormTrain.csv")
-    df_valid = pd.read_csv("SQL_Injec_Valid.csv")
-    df_test = pd.read_csv("SQL_Injec_Test.csv")
+    df_train = pd.read_csv("dataset/SQL_Injec_NormTrain.csv")
+    df_valid = pd.read_csv("dataset/SQL_Injec_Valid.csv")
+    df_test = pd.read_csv("dataset/SQL_Injec_Test.csv")
 
     all_data = pd.concat([df_train, df_valid, df_test], ignore_index=True)
     all_data_reduced = all_data[["LABEL"] + all_feature_names]
@@ -113,97 +113,87 @@ results = {}
 #Entrainement et Stats sauvgarde
 print("\n🔍 Début de la comparaison des modèles...")
 
-# Charger les stats existantes si le fichier existe
-if os.path.exists(stats_file):
-    with open(stats_file, "r") as f:
+# 1. Charger les stats existantes si le fichier existe
+if os.path.exists(sql_stats_file):
+    with open(sql_stats_file, "r") as f:
         saved_stats = json.load(f)
 else:
     saved_stats = {}
 
-results = {}
-
-for model_name, model in models.items():
-    model_key = model_name.lower()  # randomforest, svm, logisticregression
+# 2. Identifier les modèles à réentraîner
+models_to_train = []
+for model_key in MODELS:
     model_pkl = f"{model_dir}/{model_key}_model.pkl"
-    need_train = not os.path.exists(model_pkl)
+    has_pkl = os.path.exists(model_pkl)
+    has_stat = model_key in saved_stats
+    # Si il manque soit le pkl soit l'info stat, on va le réentraîner
+    if not (has_pkl and has_stat):
+        models_to_train.append(model_key)
 
-    if not need_train:
-        # Charger le modèle existant et ses stats depuis le JSON
-        print(f"⏩ Modèle {model_name} déjà existant, chargement depuis {model_pkl}")
-        with open(model_pkl, "rb") as f:
-            loaded_model = pickle.load(f)
-        info = saved_stats.get(model_key, {})
-        results[model_name] = {
-            "model": loaded_model,
-            "train_accuracy": info.get("train_accuracy", 0) / 100,
-            "val_accuracy": info.get("val_accuracy", 0) / 100,
-            "test_accuracy": info.get("test_accuracy", 0) / 100,
-            "precision": info.get("precision", 0) / 100,
-            "recall": info.get("recall", 0) / 100,
-            "f1_score": info.get("f1_score", 0) / 100,
-            "training_time": info.get("training_time", 0),
-            "best_params": info.get("best_params", {}),
-            "cv_score": info.get("cv_score", 0) / 100,
-        }
-    else:
-        # Entraîner le modèle car il n'existe pas encore
-        print(f"\n🔧 Entraînement du modèle: {model_name}")
-        grid_search = GridSearchCV(model, param_grid=params[model_name], cv=5, scoring='accuracy', n_jobs=-1, verbose=0)
+# 3. Réentraîner et sauvegarder les modèles manquants ou désynchronisés
+for model_key in models_to_train:
+    model_name = [k for k in models.keys() if k.lower() == model_key][0]
+    model = models[model_name]
+    print(f"\n🔧 (Re)Entraînement du modèle: {model_name}")
+    grid_search = GridSearchCV(model, param_grid=params[model_name], cv=5, scoring='accuracy', n_jobs=-1, verbose=0)
+    start_time = time.time()
+    grid_search.fit(X_trainval, y_trainval)
+    model_training_time = time.time() - start_time
 
-        start_time = time.time()
-        grid_search.fit(X_trainval, y_trainval)
-        model_training_time = time.time() - start_time
+    train_acc = grid_search.score(X_trainval, y_trainval)
+    val_acc = grid_search.best_score_
 
-        train_acc = grid_search.score(X_trainval, y_trainval)
-        val_acc = grid_search.best_score_
+    y_pred_test = grid_search.predict(X_test)
+    test_accuracy = accuracy_score(y_test, y_pred_test)
+    precision = precision_score(y_test, y_pred_test)
+    recall = recall_score(y_test, y_pred_test)
+    f1 = f1_score(y_test, y_pred_test)
 
-        #Test set pour évaluer le modèle à la fin
-        y_pred_test = grid_search.predict(X_test)
-        test_accuracy = accuracy_score(y_test, y_pred_test)
-        precision = precision_score(y_test, y_pred_test)
-        recall = recall_score(y_test, y_pred_test)
-        f1 = f1_score(y_test, y_pred_test)
+    # Sauvegarde du modèle entraîné
+    os.makedirs(model_dir, exist_ok=True)
+    model_pkl = f"{model_dir}/{model_key}_model.pkl"
+    with open(model_pkl, "wb") as f:
+        pickle.dump(grid_search, f)
+    print(f"💾 Modèle {model_name} sauvegardé dans {model_pkl}")
 
-        results[model_name] = {
-            "model": grid_search,
-            "train_accuracy": train_acc,
-            "val_accuracy": val_acc,
-            "test_accuracy": test_accuracy,
-            "precision": precision,
-            "recall": recall,
-            "f1_score": f1,
-            "training_time": model_training_time,
-            "best_params": grid_search.best_params_,
-            "cv_score": grid_search.best_score_
-        }
+    # Maj de la stat pour ce modèle
+    saved_stats[model_key] = {
+        "train_accuracy": round(train_acc * 100, 2),
+        "val_accuracy": round(val_acc * 100, 2),
+        "test_accuracy": round(test_accuracy * 100, 2),
+        "precision": round(precision * 100, 2),
+        "recall": round(recall * 100, 2),
+        "f1_score": round(f1 * 100, 2),
+        "cv_score": round(val_acc * 100, 2),
+        "training_time": round(model_training_time, 2),
+        "best_params": grid_search.best_params_
+    }
 
-        # Met à jour SEULEMENT CE modèle dans saved_stats
-        saved_stats[model_key] = {
-            "train_accuracy": round(train_acc * 100, 2),
-            "val_accuracy": round(val_acc * 100, 2),
-            "test_accuracy": round(test_accuracy * 100, 2),
-            "precision": round(precision * 100, 2),
-            "recall": round(recall * 100, 2),
-            "f1_score": round(f1 * 100, 2),
-            "cv_score": round(val_acc * 100, 2),
-            "training_time": round(model_training_time, 2),
-            "best_params": grid_search.best_params_
-        }
+# 4. Charger tous les modèles + stats dans results (pour la sélection du best model)
+results = {}
+for model_name, model in models.items():
+    model_key = model_name.lower()
+    model_pkl = f"{model_dir}/{model_key}_model.pkl"
+    # Charger le modèle existant et ses stats depuis le JSON
+    with open(model_pkl, "rb") as f:
+        loaded_model = pickle.load(f)
+    info = saved_stats.get(model_key, {})
+    results[model_name] = {
+        "model": loaded_model,
+        "train_accuracy": info.get("train_accuracy", 0) / 100,
+        "val_accuracy": info.get("val_accuracy", 0) / 100,
+        "test_accuracy": info.get("test_accuracy", 0) / 100,
+        "precision": info.get("precision", 0) / 100,
+        "recall": info.get("recall", 0) / 100,
+        "f1_score": info.get("f1_score", 0) / 100,
+        "training_time": info.get("training_time", 0),
+        "best_params": info.get("best_params", {}),
+        "cv_score": info.get("cv_score", 0) / 100,
+    }
 
-        # Sauvegarde du modèle entraîné
-        os.makedirs(model_dir, exist_ok=True)
-        with open(model_pkl, "wb") as f:
-            pickle.dump(grid_search, f)
-        print(f"💾 Modèle {model_name} sauvegardé dans {model_pkl}")
-        print(f"  ⏱️ Temps: {model_training_time:.2f}s")
-        print(f"  🏆 CV Score (val_acc): {val_acc:.4f}")
-        print(f"  📊 Train Score: {train_acc:.4f}")
-        print(f"  🔧 Meilleurs params: {grid_search.best_params_}")
-
-# Après la boucle : écrire TOUS les stats (anciens + nouveaux)
-with open(stats_file, "w") as f:
+# Sauvegarder à la fin le JSON mis à jour
+with open(sql_stats_file, "w") as f:
     json.dump(saved_stats, f, indent=4)
-print(f"\n📊 Statistiques mises à jour dans: {stats_file}")
 
 # Sélection du meilleur modèle (par val_accuracy)
 best_model_name = max(results, key=lambda m: results[m]["val_accuracy"])
@@ -212,8 +202,6 @@ best_score = results[best_model_name]["val_accuracy"]
 train_accuracy = results[best_model_name]["train_accuracy"]
 val_accuracy = results[best_model_name]["val_accuracy"]
 training_time = results[best_model_name]["training_time"]
-
-
 
 print(f"\n🏆 MEILLEUR MODÈLE: {best_model_name}")
 print(f"🎯 Score de validation croisée: {best_score:.4f}")
@@ -234,14 +222,6 @@ print(f"Accuracy : {accuracy:.4f}")
 print(f"Precision : {precision:.4f}")
 print(f"Recall : {recall:.4f}")
 print(f"F1-score : {f1:.4f}")
-
-# Variables pour demo.py
-train_accuracy = results[best_model_name]['train_accuracy']
-val_accuracy = results[best_model_name]['val_accuracy']
-training_time = results[best_model_name]['training_time']
-
-exported_feature_columns = feature_columns
-best_model_name = best_model_name
 
 print(f"\n✅ RÉSULTATS FINAUX ({best_model_name}):")
 print(f"  🎯 Train Score: {train_accuracy:.4f} ({train_accuracy*100:.2f}%)")
@@ -281,11 +261,12 @@ try:
 except Exception as e:
     print(f"⚠️ Impossible de sauvegarder le modèle: {e}")
 
+
 # ---------------------------
 # Fonctions d’extraction/features + prédiction
 # ---------------------------
 
-def extract_features_from_query(query):
+def extract_features_from_sql(query):
     query = query.strip().lower()
     longueur = len(query)
     nb_quotes = query.count("'") + query.count('"')
@@ -327,10 +308,6 @@ def extract_features_from_query(query):
     contient_parentheses = int("(" in query and ")" in query)
     contient_time = int("sleep" in query or "benchmark" in query)
     contient_function = int("concat" in query or "load_file" in query or "char(" in query)
-    contient_in_clause = int(" in " in query)
-    contient_exec = int("exec" in query or "xp_cmdshell" in query)
-    contient_semicolon = int(";" in query)
-    contient_union_select = int("union select" in query)
 
     if longueur < 30:
         classe_longueur = 0
@@ -349,15 +326,17 @@ def extract_features_from_query(query):
     score_complexite_norm = min(score_complexite, 1.0)
 
     features = [
-    longueur, score_injection, nb_keywords, nb_special, nb_quotes, nb_comments,
-    ratio_score_longueur, score_complexite, contient_or, contient_quote,
-    contient_comment, contient_union, contient_equal, contient_parentheses,
-    contient_time, contient_function, classe_longueur,
-    longueur_norm, score_injection_norm, nb_keywords_norm, nb_special_norm,
-    nb_quotes_norm, nb_comments_norm, ratio_score_norm, score_complexite_norm
+        longueur, score_injection, nb_keywords, nb_special, nb_quotes, nb_comments,
+        ratio_score_longueur, score_complexite, contient_or, contient_quote,
+        contient_comment, contient_union, contient_equal, contient_parentheses,
+        contient_time, contient_function, classe_longueur,
+        longueur_norm, score_injection_norm, nb_keywords_norm, nb_special_norm,
+        nb_quotes_norm, nb_comments_norm, ratio_score_norm, score_complexite_norm
     ]
 
     return features
+
+# ---------------------------
 
 def sql_predict(query_features):
     if isinstance(query_features, dict):
@@ -375,6 +354,8 @@ def sql_predict(query_features):
     df = pd.DataFrame([features_selected], columns=all_feature_names)
     return int(best_model.predict(df)[0])
 
+# ---------------------------
+
 def sql_predict_proba(query_features):
     if isinstance(query_features, dict):
         features_selected = [query_features[name] for name in all_feature_names]
@@ -388,14 +369,17 @@ def sql_predict_proba(query_features):
     df = pd.DataFrame([features_selected], columns=all_feature_names)
     return max(best_model.predict_proba(df)[0])
 
+# ---------------------------
 
 def sql_predict_from_query(query):
-    features_all = extract_features_from_query(query)
+    features_all = extract_features_from_sql(query)
     return sql_predict(features_all)
 
 
+# ---------------------------
+# Exemple de requêtes SQL à tester
+# ---------------------------
 
-# Exemples de requêtes à tester
 normal_queries = [
     "SELECT name, age FROM users WHERE id = 5;",
     "UPDATE products SET price = 19.99 WHERE product_id = 120;"
@@ -418,7 +402,7 @@ for i in range(min(5, len(X_test))):
 
 
 def print_prediction(query):
-    features_all = extract_features_from_query(query)
+    features_all = extract_features_from_sql(query)
     features_dict = dict(zip(all_feature_names, features_all))
     print(f"Features pour {query} :")
     for k in all_feature_names:

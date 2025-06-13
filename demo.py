@@ -1,18 +1,20 @@
 import os
+import json
 import pickle
 import numpy as np
 import pandas as pd
 from flask import Flask, render_template, request, jsonify
-from models.http_model import http_predict_query as http_predict, model_accuracy as http_score
-from models.sql_model import extract_features_from_query , best_model_name , train_accuracy, val_accuracy, training_time,exported_feature_columns
+from models.http_model import extract_features_from_http , best_model_name as http_best_model_name
+from models.sql_model import extract_features_from_sql , best_model_name as sql_best_model_name
 
 app = Flask(__name__)
 
-def format_sqlmodel_name(model_name):
+def format_model_name(model_name):
     model_map = {
         "RandomForest": "Random Forest",
         "SVM": "SVM",
-        "LogisticRegression": "Logistic Regression"
+        "LogisticRegression": "Logistic Regression",
+        "gradientboosting": "Gradient Boosting"
     }
     return model_map.get(model_name, model_name)
 
@@ -22,17 +24,11 @@ def index():
 
 @app.route("/http")
 def http_page():
-    return render_template("http.html", score=http_score)
+    return render_template("http.html", http_best_model=http_best_model_name)
 
 @app.route("/sql")
 def sql_page():
-    return render_template(
-        "sql.html",
-        train_score=round(train_accuracy * 100, 2),
-        val_score=round(val_accuracy * 100, 2),
-        training_time=round(training_time, 2),
-        best_model=format_sqlmodel_name(best_model_name) 
-    )
+    return render_template("sql.html", sql_best_model=sql_best_model_name)
 
 @app.route("/analystic")
 def analystic():
@@ -46,6 +42,29 @@ def files():
 def login():
     return render_template("login.html")
 
+@app.route("/model-info")
+def model_info():
+    model_name = request.args.get("model", "").lower()  # Nom du modèle (ex: 'randomforest')
+    model_type = request.args.get("type", "")  # Type du modèle (ex: 'http' ou 'sql')
+
+    if model_type == "http":
+        stats_file = "saved_models/http_model_stats.json"
+    elif model_type == "sql":
+        stats_file = "saved_models/sql_model_stats.json"
+    else:
+        return jsonify({"error": "Modèle inconnu ou type incorrect"}), 400
+
+    try:
+        with open(stats_file, "r") as f:
+            stats = json.load(f)
+
+        if model_name not in stats:
+            return jsonify({"error": "Modèle non trouvé"}), 404
+
+        return jsonify(stats[model_name])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route("/predict-sql", methods=["POST"])
 def predict_sql_route():
@@ -54,8 +73,6 @@ def predict_sql_route():
     selected_model = data.get("model", "randomforest").lower()
 
     model_path = f"saved_models/all_Sql_models/{selected_model}_model.pkl"
-
-    print(f"MODEL PATH UTILISÉ DANS FLASK : {model_path}")
 
     # Charger le modèle choisi
     try:
@@ -66,8 +83,8 @@ def predict_sql_route():
         return jsonify({"error": f"Erreur de chargement du modèle : {e}"}), 500
 
     try:
-        # 1. Extraire toutes les features (29)
-        features_all = extract_features_from_query(query)
+        # 1. Extraire toutes les features
+        features_all = extract_features_from_sql(query)
         # 2. Mapper les features avec leurs noms
         all_feature_names = [
             "LONGUEUR", "SCORE_INJECTION", "NB_KEYWORDS", "NB_SPECIAL_CHARS", "NB_QUOTES",
@@ -86,7 +103,7 @@ def predict_sql_route():
         # 5. Créer le DataFrame avec seulement les bonnes colonnes dans le bon ordre
         df = pd.DataFrame([features_selected], columns=all_feature_names)
 
-        print("Features envoyées au modèle Flask :", features_selected)
+        # print("Features envoyées au modèle Flask :", features_selected)
 
         # 6. Faire la prédiction
         prediction = loaded_model.predict(df)[0]
@@ -110,34 +127,62 @@ def predict_sql_route():
         return jsonify({"error": f"Erreur d’analyse : {e}"}), 500
 
 
-
 @app.route("/predict-http", methods=["POST"])
 def predict_http_route():
     data = request.get_json()
     query = data.get("query", "")
-    result = http_predict(query)
-    return jsonify({
-        "result": result,
-        "type": "http",
-        "confidence": http_score
-    })
+    selected_model = data.get("model", "randomforest").lower()
 
-@app.route("/model-info")
-def model_info():
-    import json
-    model_name = request.args.get("model", "").lower()
-    stats_file = "saved_models/model_stats.json"
-    
+    model_path = f"saved_models/all_http_models/{selected_model}_model.pkl"
+
+    print(f"MODEL PATH UTILISÉ DANS FLASK : {model_path}")
+
+    # Charger le modèle choisi
     try:
-        with open(stats_file, "r") as f:
-            stats = json.load(f)
-        
-        if model_name not in stats:
-            return jsonify({"error": "Modèle non trouvé"}), 404
-        
-        return jsonify(stats[model_name])
+        with open(model_path, "rb") as f:
+            loaded_model = pickle.load(f)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"❌ Erreur de chargement du modèle : {e}")
+        return jsonify({"error": f"Erreur de chargement du modèle : {e}"}), 500
+
+    try:
+        # Extraire les caractéristiques pour la requête HTTP
+        features_all = extract_features_from_http(query)
+        
+        all_feature_names = [
+            "CONTENT_LENGTH_NORM", "SPECIAL_CHAR_COUNT_NORM", "PARAM_COUNT_NORM", 
+            "URL_SPECIAL_CHAR_COUNT_NORM", "URL_PARAM_COUNT_NORM", "URL_LENGTH_NORM",
+            "D_CONTENT_SCORE_NORM", "URL_SCORE_NORM", "GLOBAL_SCORE_NORM",
+            "NBKEYWORDSCONTENT_NORM", "NBKEYWORDSURL_NORM", "NBCOMMENTCONTENT_NORM", 
+            "NBCOMMENTURL_NORM", "RATIOSCORELONGUEURCONTENT_NORM", "RATIOSCORELONGUEURURL_NORM", 
+            "SCORECOMPLEXITECONTENT_NORM", "SCORECOMPLEXITEURL_NORM"
+        ]
+        
+        features_dict = dict(zip(all_feature_names, features_all))
+        features_selected = [features_dict[name] for name in all_feature_names]
+
+        df = pd.DataFrame([features_selected], columns=all_feature_names)
+
+        # print("Features envoyées au modèle Flask :", features_selected)
+
+        # Faire la prédiction
+        prediction = loaded_model.predict(df)[0]
+        print(f"Résultat brut du modèle :", prediction)
+
+        try:
+            confidence = round(float(max(loaded_model.predict_proba(df)[0])), 3)
+        except:
+            confidence = None
+
+        return jsonify({
+            "result": int(prediction),
+            "model": selected_model,
+            "confidence": confidence
+        })
+    except Exception as e:
+        print(f"❌ Erreur d’analyse : {e}")
+        return jsonify({"error": f"Erreur d’analyse : {e}"}), 500
+
 
 
 if __name__ == "__main__":
