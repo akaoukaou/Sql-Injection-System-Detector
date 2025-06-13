@@ -57,7 +57,7 @@ try:
     all_data_reduced = all_data[["LABEL"] + all_feature_names_updated]
 
     print("Colonnes du DataFrame après transformation :")
-    print(all_data_reduced.columns)
+    # print(all_data_reduced.columns)
 
     # 2. Séparer 30% pour le test final (jamais utilisé en cross-validation)
     df_trainval, df_test_final = train_test_split(

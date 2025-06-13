@@ -404,11 +404,14 @@ for i in range(min(5, len(X_test))):
 def print_prediction(query):
     features_all = extract_features_from_sql(query)
     features_dict = dict(zip(all_feature_names, features_all))
+    """
     print(f"Features pour {query} :")
     for k in all_feature_names:
-        print(f"{k}: {features_dict[k]}")
-    features_selected = [features_dict[name] for name in all_feature_names]
-    print("Features envoyées au modèle :", features_selected)
+        print(f"{k}: {features_dict[k]}") 
+    """
+    features_selected = [features_dict[name] for name in all_feature_names] 
+    """ print("Features envoyées au modèle :", features_selected)    """
+    
     pred = sql_predict(features_selected)
     label = "MALICIOUS" if pred == 1 else "BENIGN"
     print(f"Requête : {query}\n→ Prédiction du modèle : {label}\n")
