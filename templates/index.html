@@ -893,11 +893,8 @@
     </style>
 </head>
 
-
-
-
-
 <body>
+    <!--Sidebar Section -->
     <nav class="sidebar">
         <header>
             <div class="image-text">
@@ -905,12 +902,11 @@
                     <img src="/static/images/logo.png" alt="Logo SQL Shield">
                 </span>
                 <div class="text logo-text">
-                    <span class="name">SQL App</span>
-                    <span class="profession">Analyser</span>
+                    <span class="name">SQL Shield</span>
+                    <span class="profession">Security Analyzer</span>
                 </div>
             </div>
             <i class='bx bx-chevron-right toggle'></i>
-            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         </header>
 
         <div class="menu-bar">
@@ -1158,13 +1154,6 @@
     </div>
 
     <script>
-        const sidebar = document.querySelector('.sidebar');
-        const toggle = document.querySelector('.toggle');
-
-        toggle.addEventListener('click', () => {
-            sidebar.classList.toggle('close');
-        });
-
         // Smooth animations on load
         window.addEventListener('load', () => {
             document.querySelector('.hero-content').style.animation = 'fadeInUp 1s ease-out';
