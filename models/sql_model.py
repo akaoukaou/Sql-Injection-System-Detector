@@ -68,8 +68,8 @@ print(f"\n📈 Distribution des classes (TrainVal):")
 print(f"TrainVal - Benign: {sum(y_trainval == 0)}, Malicious: {sum(y_trainval == 1)} ({sum(y_trainval == 1)/len(y_trainval)*100:.1f}%)")
 print(f"Test - Benign: {sum(y_test == 0)}, Malicious: {sum(y_test == 1)} ({sum(y_test == 1)/len(y_test)*100:.1f}%)")
 
-print(f"\n📊 Statistiques des features (TrainVal):")
-print(X_trainval.describe())
+#print(f"\n📊 Statistiques des features (TrainVal):")
+#print(X_trainval.describe())
 
 # 4. Définition des modèles
 models = {
