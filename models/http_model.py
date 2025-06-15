@@ -5,7 +5,6 @@ import pickle
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.svm import SVC
-from sklearn.impute import SimpleImputer
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
@@ -13,25 +12,23 @@ import numpy as np
 import json
 import re
 
-# Define model directory and stats file
+# Directories & files
 model_dir = "saved_models/all_http_models"
 http_stats_file = "saved_models/http_model_stats.json"
-#MODELS = ["randomforest", "svm", "gradientboosting"]
 MODELS = ["randomforest", "gradientboosting"]
 
-
-# Define feature names based on your dataset columns
+# Features list
 all_feature_names = [
-    "CONTENT_LENGTH_NORM", "SPECIAL_CHAR_COUNT_NORM", "PARAM_COUNT_NORM", 
+    "CONTENT_LENGTH_NORM", "SPECIAL_CHAR_COUNT_NORM", "PARAM_COUNT_NORM",
     "URL_SPECIAL_CHAR_COUNT_NORM", "URL_PARAM_COUNT_NORM", "URL_LENGTH_NORM",
     "D_CONTENT_SCORE_NORM", "URL_SCORE_NORM", "GLOBAL_SCORE_NORM",
-    "NBQUOTESCONTENT_NORM", "NBQUOTESURL_NORM", "NBKEYWORDSCONTENT_NORM", 
-    "NBKEYWORDSURL_NORM", "NBCOMMENTCONTENT_NORM", "NBCOMMENTURL_NORM", 
-    "RATIOSCORELONGUEURCONTENT_NORM", "RATIOSCORELONGUEURURL_NORM", 
+    "NBQUOTESCONTENT_NORM", "NBQUOTESURL_NORM", "NBKEYWORDSCONTENT_NORM",
+    "NBKEYWORDSURL_NORM", "NBCOMMENTCONTENT_NORM", "NBCOMMENTURL_NORM",
+    "RATIOSCORELONGUEURCONTENT_NORM", "RATIOSCORELONGUEURURL_NORM",
     "SCORECOMPLEXITECONTENT_NORM", "SCORECOMPLEXITEURL_NORM"
 ]
 
-# 1. Charger et concaténer tous les fichiers
+# Charger et préparer les datasets
 print("🔄 Chargement des datasets HTTP...")
 
 try:
@@ -39,27 +36,24 @@ try:
     df_valid = pd.read_csv("dataset/csic2010_valid.csv")
     df_test = pd.read_csv("dataset/csic2010_test.csv")
 
-    # Renommer les colonnes pour les aligner avec les noms attendus par le modèle
     df_train.rename(columns={'CLASSIFICATION': 'LABEL'}, inplace=True)
     df_valid.rename(columns={'CLASSIFICATION': 'LABEL'}, inplace=True)
     df_test.rename(columns={'CLASSIFICATION': 'LABEL'}, inplace=True)
 
-    # Supprimer les colonnes inutiles (vides ou non pertinentes)
+    # Supprimer les colonnes inutiles (vides)
     df_train.drop(columns=['NBQUOTESCONTENT_NORM', 'NBQUOTESURL_NORM'], inplace=True)
     df_valid.drop(columns=['NBQUOTESCONTENT_NORM', 'NBQUOTESURL_NORM'], inplace=True)
     df_test.drop(columns=['NBQUOTESCONTENT_NORM', 'NBQUOTESURL_NORM'], inplace=True)
 
-    # Mettre à jour la liste des caractéristiques en supprimant les colonnes
+    # Mettre à jour la liste des features
     all_feature_names_updated = [col for col in all_feature_names if col not in ['NBQUOTESCONTENT_NORM', 'NBQUOTESURL_NORM']]
 
-    # Fusionner les datasets
     all_data = pd.concat([df_train, df_valid, df_test], ignore_index=True)
     all_data_reduced = all_data[["LABEL"] + all_feature_names_updated]
 
     print("Colonnes du DataFrame après transformation :")
     # print(all_data_reduced.columns)
 
-    # 2. Séparer 30% pour le test final (jamais utilisé en cross-validation)
     df_trainval, df_test_final = train_test_split(
         all_data_reduced, test_size=0.30, stratify=all_data_reduced['LABEL'], random_state=42
     )
@@ -73,8 +67,7 @@ except FileNotFoundError as e:
     print("Vérifiez que les fichiers CSV sont dans le bon répertoire")
     exit(1)
 
-# 3. Préparation des features
-feature_columns = all_feature_names_updated  # Utilisez la nouvelle liste 
+feature_columns = all_feature_names_updated
 
 X_trainval = df_trainval[feature_columns]
 y_trainval = df_trainval['LABEL']
@@ -85,15 +78,11 @@ print(f"\n📈 Distribution des classes (TrainVal):")
 print(f"TrainVal - Benign: {sum(y_trainval == 0)}, Malicious: {sum(y_trainval == 1)} ({sum(y_trainval == 1)/len(y_trainval)*100:.1f}%)")
 print(f"Test - Benign: {sum(y_test == 0)}, Malicious: {sum(y_test == 1)} ({sum(y_test == 1)/len(y_test)*100:.1f}%)")
 
-# 4. Définition des modèles
+# Définition des modèles et hyperparamètres
 models = {
     'RandomForest': Pipeline([
         ('scaler', StandardScaler()),
         ('clf', RandomForestClassifier(random_state=42, n_jobs=-1))
-    ]),
-    'SVM': Pipeline([
-        ('scaler', StandardScaler()),
-        ('clf', SVC(random_state=42, probability=True))
     ]),
     'GradientBoosting': Pipeline([
         ('scaler', StandardScaler()),
@@ -107,11 +96,6 @@ params = {
         'clf__max_depth': [10, 20, None],
         'clf__min_samples_split': [2, 5]
     },
-    'SVM': {
-        'clf__C': [0.1, 1.0, 10.0],
-        'clf__kernel': ['rbf', 'linear'],
-        'clf__gamma': ['scale', 'auto']
-    },
     'GradientBoosting': {
         'clf__n_estimators': [100, 200],
         'clf__learning_rate': [0.05, 0.1],
@@ -119,15 +103,13 @@ params = {
     }
 }
 
-best_model = None
-best_score = 0
-best_model_name = ""
-results = {}
+# ---------------------------------------------------------
+# *** GESTION DES STATS ***
+# ---------------------------------------------------------
 
-# Entraînement et sauvegarde des modèles
 print("\n🔍 Début de la comparaison des modèles...")
 
-# 1. Charger les stats existantes si le fichier existe
+# 1. Charger stats existantes
 if os.path.exists(http_stats_file):
     with open(http_stats_file, "r") as f:
         saved_stats = json.load(f)
@@ -143,7 +125,7 @@ for model_key in MODELS:
     if not (has_pkl and has_stat):
         models_to_train.append(model_key)
 
-# 3. Réentraîner et sauvegarder les modèles manquants ou désynchronisés
+# 3. Réentraîner et MAJ stats en mémoire (RAM)
 for model_key in models_to_train:
     model_name = [k for k in models.keys() if k.lower() == model_key][0]
     model = models[model_name]
@@ -168,7 +150,7 @@ for model_key in models_to_train:
         pickle.dump(grid_search, f)
     print(f"💾 Modèle {model_name} sauvegardé dans {model_pkl}")
 
-    # Mise à jour de la stat pour ce modèle
+    # Mise à jour des stats (RAM, pas encore écrit sur disque)
     saved_stats[model_key] = {
         "train_accuracy": round(train_acc * 100, 2),
         "val_accuracy": round(val_acc * 100, 2),
@@ -181,30 +163,61 @@ for model_key in models_to_train:
         "best_params": grid_search.best_params_
     }
 
-# Sauvegarder les statistiques mises à jour
+# 4. Sauvegarde unique du JSON
 with open(http_stats_file, "w") as f:
     json.dump(saved_stats, f, indent=4)
 
-# 4. Sélectionner le meilleur modèle (par `val_accuracy`)
-best_model_name = max(saved_stats, key=lambda m: saved_stats[m]["val_accuracy"])
-best_model = pickle.load(open(f"{model_dir}/{best_model_name}_model.pkl", "rb"))
-best_score = saved_stats[best_model_name]["val_accuracy"]
+# 5. Rechargement de tous les modèles + stats pour sélection du meilleur
+results = {}
+for model_name, model in models.items():
+    model_key = model_name.lower()
+    model_pkl = f"{model_dir}/{model_key}_model.pkl"
+    with open(model_pkl, "rb") as f:
+        loaded_model = pickle.load(f)
+    info = saved_stats.get(model_key, {})
+    results[model_name] = {
+        "model": loaded_model,
+        "train_accuracy": info.get("train_accuracy", 0) / 100,
+        "val_accuracy": info.get("val_accuracy", 0) / 100,
+        "test_accuracy": info.get("test_accuracy", 0) / 100,
+        "precision": info.get("precision", 0) / 100,
+        "recall": info.get("recall", 0) / 100,
+        "f1_score": info.get("f1_score", 0) / 100,
+        "training_time": info.get("training_time", 0),
+        "best_params": info.get("best_params", {}),
+        "cv_score": info.get("cv_score", 0) / 100,
+    }
 
-# Évaluation finale du meilleur modèle sur le jeu de test
+# 6. Sélection du meilleur modèle
+best_model_name = max(results, key=lambda m: results[m]["val_accuracy"])
+best_model = results[best_model_name]["model"]
+best_score = results[best_model_name]["val_accuracy"]
+train_accuracy = results[best_model_name]["train_accuracy"]
+val_accuracy = results[best_model_name]["val_accuracy"]
+training_time = results[best_model_name]["training_time"]
+
 print(f"\n🏆 MEILLEUR MODÈLE: {best_model_name}")
+print(f"🎯 Score de validation croisée: {best_score:.4f}")
+
+# 7. Évaluation finale sur le test set
 y_test_pred = best_model.predict(X_test)
-test_accuracy = accuracy_score(y_test, y_test_pred)
+accuracy = accuracy_score(y_test, y_test_pred)
 precision = precision_score(y_test, y_test_pred)
 recall = recall_score(y_test, y_test_pred)
 f1 = f1_score(y_test, y_test_pred)
 
 print(f"\n📋 Résultats complets sur l'ensemble de test :")
-print(f"Accuracy : {test_accuracy:.4f}")
+print(f"Accuracy : {accuracy:.4f}")
 print(f"Precision : {precision:.4f}")
 print(f"Recall : {recall:.4f}")
 print(f"F1-score : {f1:.4f}")
 
-# Affichage du rapport de classification et de la matrice de confusion
+print(f"\n✅ RÉSULTATS FINAUX ({best_model_name}):")
+print(f"  🎯 Train Score: {train_accuracy:.4f} ({train_accuracy*100:.2f}%)")
+print(f"  🎯 Cross-Validation Score: {val_accuracy:.4f} ({val_accuracy*100:.2f}%)")
+print(f"  🎯 Test Score: {accuracy:.4f} ({accuracy*100:.2f}%)")
+print(f"  ⏱️ Training Time: {training_time:.2f} secondes")
+
 print(f"\n📋 Rapport de classification (Test):")
 print(classification_report(y_test, y_test_pred, target_names=['Benign', 'Malicious']))
 
@@ -222,7 +235,6 @@ try:
     print(f"\n💾 Meilleur modèle sauvegardé: {model_path}")
 except Exception as e:
     print(f"⚠️ Impossible de sauvegarder le modèle: {e}")
-
 
 
 
