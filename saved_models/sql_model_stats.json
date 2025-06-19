@@ -28,5 +28,20 @@
             "clf__penalty": "l2",
             "clf__solver": "saga"
         }
+    },
+    "svm": {
+        "train_accuracy": 99.61,
+        "val_accuracy": 99.57,
+        "test_accuracy": 99.55,
+        "precision": 99.91,
+        "recall": 98.87,
+        "f1_score": 99.39,
+        "cv_score": 99.57,
+        "training_time": 1422.36,
+        "best_params": {
+            "clf__C": 10.0,
+            "clf__gamma": "scale",
+            "clf__kernel": "rbf"
+        }
     }
 }

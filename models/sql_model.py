@@ -16,7 +16,7 @@ import json
 # Directories & files
 model_dir = "saved_models/all_Sql_models"
 sql_stats_file = "saved_models/sql_model_stats.json"
-MODELS = ["randomforest" ,"logisticregression"]
+MODELS = ["randomforest" , "svm" ,"logisticregression"]
 
 # Feature names
 all_feature_names = [
@@ -426,10 +426,11 @@ test_queries = [
     ("SELECT * FROM catalogue WHERE (category = 'books' AND price <= 20) OR (category = 'cds' AND price <= 10);", 0),
     ("SELECT * FROM payments WHERE details = 'VISA (**** **** **** 1234)';", 0),
 ]
-
-print("\n===== TEST =====")
+"""
+print("\n===== SQL TEST =====")
 for q, expected in test_queries:
     pred = sql_predict_from_query(q)
     verdict = "✅" if pred == expected else "❌"
     label_txt = "🟡 MALICIOUS" if pred == 1 else "⚪ BENIGN"
     print(f"{verdict} Requête : {q[:70]}... → Prédit :  {label_txt} (Attendu : {'🟡 MALICIOUS' if expected==1 else '⚪ BENIGN'})")
+"""

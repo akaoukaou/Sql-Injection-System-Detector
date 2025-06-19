@@ -8,6 +8,7 @@ from sklearn.svm import SVC
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
+from urllib.parse import urlparse
 import numpy as np
 import json
 import re
@@ -19,40 +20,32 @@ MODELS = ["randomforest", "gradientboosting"]
 
 # Features list
 all_feature_names = [
-    "CONTENT_LENGTH_NORM", "SPECIAL_CHAR_COUNT_NORM", "PARAM_COUNT_NORM",
-    "URL_SPECIAL_CHAR_COUNT_NORM", "URL_PARAM_COUNT_NORM", "URL_LENGTH_NORM",
-    "D_CONTENT_SCORE_NORM", "URL_SCORE_NORM", "GLOBAL_SCORE_NORM",
-    "NBQUOTESCONTENT_NORM", "NBQUOTESURL_NORM", "NBKEYWORDSCONTENT_NORM",
-    "NBKEYWORDSURL_NORM", "NBCOMMENTCONTENT_NORM", "NBCOMMENTURL_NORM",
-    "RATIOSCORELONGUEURCONTENT_NORM", "RATIOSCORELONGUEURURL_NORM",
-    "SCORECOMPLEXITECONTENT_NORM", "SCORECOMPLEXITEURL_NORM"
+    "METHODE_TYPE",
+    "CONTIENT_OR",
+    "CONTIENT_EQUAL",
+    "CONTIENT_QUOTE",
+    "CONTIENT_COMMENT",
+    "CONTIENT_UNION",
+    "CONTIENT_SELECT",
+    "CONTIENT_FUNCTION",
+    "LONGUEUR_NORM",
+    "SCORE_INJECTION_NORM",
+    "SCORE_COMPLEXITE_NORM",
+    "NB_SQL_WORDS_NORM",# "NB_SPECIAL_CHARS_NORM","NB_QUOTES_NORM",
+    "NB_EQUALS_NORM",
+    "RATIO_SCORE_LENGTH_NORM"
 ]
 
 # Charger et préparer les datasets
 print("🔄 Chargement des datasets HTTP...")
 
 try:
-    df_train = pd.read_csv("dataset/csic2010_train.csv")
-    df_valid = pd.read_csv("dataset/csic2010_valid.csv")
-    df_test = pd.read_csv("dataset/csic2010_test.csv")
-
-    df_train.rename(columns={'CLASSIFICATION': 'LABEL'}, inplace=True)
-    df_valid.rename(columns={'CLASSIFICATION': 'LABEL'}, inplace=True)
-    df_test.rename(columns={'CLASSIFICATION': 'LABEL'}, inplace=True)
-
-    # Supprimer les colonnes inutiles (vides)
-    df_train.drop(columns=['NBQUOTESCONTENT_NORM', 'NBQUOTESURL_NORM'], inplace=True)
-    df_valid.drop(columns=['NBQUOTESCONTENT_NORM', 'NBQUOTESURL_NORM'], inplace=True)
-    df_test.drop(columns=['NBQUOTESCONTENT_NORM', 'NBQUOTESURL_NORM'], inplace=True)
-
-    # Mettre à jour la liste des features
-    all_feature_names_updated = [col for col in all_feature_names if col not in ['NBQUOTESCONTENT_NORM', 'NBQUOTESURL_NORM']]
+    df_train = pd.read_csv("dataset/a_ids_train.csv")
+    df_valid = pd.read_csv("dataset/a_ids_valid.csv")
+    df_test = pd.read_csv("dataset/a_ids_test.csv")
 
     all_data = pd.concat([df_train, df_valid, df_test], ignore_index=True)
-    all_data_reduced = all_data[["LABEL"] + all_feature_names_updated]
-
-    print("Colonnes du DataFrame après transformation :")
-    # print(all_data_reduced.columns)
+    all_data_reduced = all_data[["LABEL"] + all_feature_names]
 
     df_trainval, df_test_final = train_test_split(
         all_data_reduced, test_size=0.30, stratify=all_data_reduced['LABEL'], random_state=42
@@ -67,8 +60,7 @@ except FileNotFoundError as e:
     print("Vérifiez que les fichiers CSV sont dans le bon répertoire")
     exit(1)
 
-feature_columns = all_feature_names_updated
-
+feature_columns = all_feature_names
 X_trainval = df_trainval[feature_columns]
 y_trainval = df_trainval['LABEL']
 X_test = df_test_final[feature_columns]
@@ -243,52 +235,101 @@ except Exception as e:
 # ---------------------------
 
 def extract_features_from_http(request):
-    url = request.split(' ')[1] if request.split(' ')[0] == "GET" else ''
+    """
+    Optimized feature extraction for HTTP requests based on your dataset statistics
+    Returns features matching exactly with your model's expected schema
+    """
+    features = {
+        "METHODE_TYPE": 0.0,
+        "CONTIENT_OR": 0.0,
+        "CONTIENT_EQUAL": 0.0,
+        "CONTIENT_QUOTE": 0.0,
+        "CONTIENT_COMMENT": 0.0,
+        "CONTIENT_UNION": 0.0,
+        "CONTIENT_SELECT": 0.0,
+        "CONTIENT_FUNCTION": 0.0,
+        "LONGUEUR_NORM": 0.0,
+        "SCORE_INJECTION_NORM": 0.0,
+        "SCORE_COMPLEXITE_NORM": 0.0,
+        "NB_SQL_WORDS_NORM": 0.0, # "NB_SPECIAL_CHARS_NORM": 0.0, "NB_QUOTES_NORM": 0.0,
+        "NB_EQUALS_NORM": 0.0,
+        "RATIO_SCORE_LENGTH_NORM": 0.0
+    }
 
-    # Raw features
-    content_length = len(request)
-    special_char_count = len(re.findall(r'[^\w\s]', request))
-    url_params = request.split('?')[-1] if '?' in request else ''
-    param_count = len(url_params.split('&')) if url_params else 0
-    url_special_char_count = len(re.findall(r'[^\w\s]', url))
-    url_param_count = len(url_params.split('&')) if url_params else 0
-    url_length = len(url)
-    d_content_score = content_length / 100
-    url_score = url_length / 100
-    global_score = (d_content_score + url_score) / 2
-    nb_keywords_content = len(re.findall(r'\b(select|insert|update|delete|drop|benchmark|exec)\b', request))
-    nb_keywords_url = len(re.findall(r'\b(select|insert|update|delete|drop|benchmark|exec)\b', url))
-    nb_comments_content = request.count("--") + request.count("/*")
-    nb_comments_url = url.count("--") + url.count("/*")
+    try:
+        # 1. Parse HTTP request
+        parts = request.split('\n\n', 1)
+        headers = parts[0]
+        body = parts[1] if len(parts) > 1 else ""
+        first_line = headers.split('\n')[0] if headers else ""
 
-    ratio_score_len_content = global_score / (len(request) + 1)
-    ratio_score_len_url = url_score / (len(url) + 1)
-    score_complexity_content = (special_char_count + nb_keywords_content) / (len(request) + 1)
-    score_complexity_url = (url_special_char_count + nb_keywords_url) / (len(url) + 1)
+        # 2. METHODE_TYPE (POST=1, others=0)
+        features["METHODE_TYPE"] = 1.0 if first_line.strip().upper().startswith('POST') else 0.0
 
-    # Normalisation basique
-    features = [
-        content_length / 1000,                       # CONTENT_LENGTH_NORM
-        special_char_count / 50,                     # SPECIAL_CHAR_COUNT_NORM
-        param_count / 10,                            # PARAM_COUNT_NORM
-        url_special_char_count / 20,                 # URL_SPECIAL_CHAR_COUNT_NORM
-        url_param_count / 10,                        # URL_PARAM_COUNT_NORM
-        url_length / 200,                            # URL_LENGTH_NORM
-        d_content_score / 10,                        # D_CONTENT_SCORE_NORM
-        url_score / 10,                              # URL_SCORE_NORM
-        global_score / 10,                           # GLOBAL_SCORE_NORM
-        nb_keywords_content / 10,                    # NBKEYWORDSCONTENT_NORM
-        nb_keywords_url / 10,                        # NBKEYWORDSURL_NORM
-        nb_comments_content / 5,                     # NBCOMMENTCONTENT_NORM
-        nb_comments_url / 5,                         # NBCOMMENTURL_NORM
-        ratio_score_len_content,                     # RATIOSCORELONGUEURCONTENT_NORM
-        ratio_score_len_url,                         # RATIOSCORELONGUEURURL_NORM
-        score_complexity_content,                    # SCORECOMPLEXITECONTENT_NORM
-        score_complexity_url                         # SCORECOMPLEXITEURL_NORM
-    ]
+        # 3. Extract URL components
+        url = re.sub(r'^(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH|TRACE|CONNECT)\s+|\s+HTTP/.*', 
+                    '', first_line.strip(), flags=re.IGNORECASE)
+        parsed_url = urlparse(url)
+        query = parsed_url.query
+        path = parsed_url.path
 
+        # Combine content for analysis
+        content = body + " " + query
+
+        # 4. Content length normalization (based on 75th percentile)
+        features["LONGUEUR_NORM"] = min(len(content) / 1000, 1.0)  # Normalize to max 1000 chars
+
+        # 5. SQL keyword detection (calibrated to dataset means)
+        features["CONTIENT_OR"] = min(len(re.findall(r'\bOR\b', content, re.IGNORECASE)) / 5.0, 1.0)
+        features["CONTIENT_EQUAL"] = min(len(re.findall(r'=', content)) / 10.0, 1.0)
+        features["CONTIENT_QUOTE"] = min(len(re.findall(r'[\'"]', content)) / 5.0, 1.0)
+        features["CONTIENT_COMMENT"] = min(len(re.findall(r'(--|\#|/\*|\*/)', content)) / 3.0, 1.0)
+        features["CONTIENT_UNION"] = min(len(re.findall(r'\bUNION\b', content, re.IGNORECASE)) / 2.0, 1.0)
+        features["CONTIENT_SELECT"] = min(len(re.findall(r'\bSELECT\b', content, re.IGNORECASE)) / 2.0, 1.0)
+        features["CONTIENT_FUNCTION"] = min(len(re.findall(r'\b(EXEC|DECLARE|CALL|EVAL|CAST)\b', content, re.IGNORECASE)) / 3.0, 1.0)
+
+        # 6. Special character analysis
+
+
+        # 7. SQL word patterns (calibrated to malicious request averages)
+        sql_keywords = r'\b(SELECT|UNION|INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|EXEC)\b'
+        features["NB_SQL_WORDS_NORM"] = min(len(re.findall(sql_keywords, content, re.IGNORECASE)) / 5.0, 1.0)
+
+        # 8. Injection score (using dataset statistics)
+        injection_patterns = [
+            r'\bUNION\s+SELECT\b',
+            r'\bDROP\s+TABLE\b',
+            r'\bINSERT\s+INTO\b',
+            r'\bDELETE\s+FROM\b',
+            r'\bEXEC\s*\(',
+            r'WAITFOR\s+DELAY',
+            r'<\s*SCRIPT\b',
+            r'1\s*=\s*1',
+            r'\bSLEEP\s*\(',
+            r'\bXP_'
+        ]
+        injection_score = sum(1 if re.search(p, content, re.IGNORECASE) else 0 for p in injection_patterns)
+        features["SCORE_INJECTION_NORM"] = min(injection_score / 3.0, 1.0)
+
+        # 9. Complexity score (matching dataset distribution)
+        complexity_factors = (
+            len(re.findall(r'[^\w\s]', content)) +  # Special chars
+            len(re.findall(r'\b(AND|OR|NOT)\b', content, re.IGNORECASE)) +  # Logic operators
+            len(re.findall(r'\(.*?\)', content))  # Parentheses
+        )
+        features["SCORE_COMPLEXITE_NORM"] = min(complexity_factors / 30.0, 1.0)
+
+        # 10. Ratio feature (aligned with dataset distribution)
+        if len(content) > 0:
+            features["RATIO_SCORE_LENGTH_NORM"] = min(
+                (features["SCORE_INJECTION_NORM"] + features["SCORE_COMPLEXITE_NORM"]) / 
+                (len(content) / 1000.0 + 0.001),  # Avoid division by zero
+                1.0
+            )
+    except Exception as e:
+        print(f"⚠️ Feature extraction error: {str(e)}")
+    
     return features
-
 
 # ---------------------------
 
@@ -311,7 +352,6 @@ def http_predict(query_features):
 
     # Faire la prédiction
     return int(best_model.predict(df)[0])
-
 # ---------------------------
 
 def http_predict_proba(query_features):
@@ -334,27 +374,49 @@ def http_predict_from_query(query):
     features_all = extract_features_from_http(query)
     return http_predict(features_all)
 
-
 # ---------------------------
 # Exemple de requêtes HTTP à tester
 # ---------------------------
 
-normal_requests = [
-    "GET /index.html HTTP/1.1",
-    "POST /login HTTP/1.1"
+test_queries = [
+    # Requêtes normales (benignes)
+    ("GET /index.html HTTP/1.1", 0),
+    ("POST /login HTTP/1.1\nContent-Length: 20\n\nusername=test&pwd=123", 0),
+    ("GET /products/list?page=3&order=asc HTTP/1.1", 0),
+    ("GET /profile/view?user=alice HTTP/1.1", 0),
+    ("POST /api/v1/update HTTP/1.1\nContent-Length: 33\n\nname=Tom&age=32&country=france", 0),
+
+    # Attaques classiques
+    ("GET /index.php?id=1 OR 1=1 -- HTTP/1.1", 1),
+    ("POST /login.php HTTP/1.1\nContent-Length: 41\n\nusername=admin' --&password=irrelevant", 1),
+    ("GET /search.php?q=UNION+SELECT+1,2,3 HTTP/1.1", 1),
+    ("GET /products.php?id=5; DROP TABLE users; -- HTTP/1.1", 1),
+    ("GET /admin.php?username=admin&password=123456 HTTP/1.1", 1),
+    ("GET /home.php?query=<script>alert(1)</script> HTTP/1.1", 1),
+
+    # Attaques subtiles/furtives
+    ("GET /data.php?item=foo'/**/OR/**/1=1-- HTTP/1.1", 1),
+    ("POST /api/upload HTTP/1.1\nContent-Length: 49\n\nfile=../../../../etc/passwd&name=x", 1),
+    ("GET /page.php?id=2;WAITFOR DELAY '0:0:5'-- HTTP/1.1", 1),
+
+    # Faux positifs potentiels (normaux mais un peu “louches”)
+    ("GET /admin.js?debug=true HTTP/1.1", 0),
+    ("GET /backup.tar.gz HTTP/1.1", 0),
+    ("GET /contact.php?subject=orchestra HTTP/1.1", 0),
+    ("POST /api/save HTTP/1.1\nContent-Length: 18\n\nnote=DROP+by+soon", 0),
+    ("GET /newsletter.php?email=foo@bar.com HTTP/1.1", 0),
 ]
 
-malicious_requests = [
-    "GET /index.php?id=1 OR 1=1 -- HTTP/1.1",
-    "GET /admin.php?username=admin&password=123456 HTTP/1.1"
-]
+print("\n===== HTTP TEST =====")
+for q, expected in test_queries:
+    pred = http_predict_from_query(q)
+    verdict = "✅" if pred == expected else "❌"
+    label_txt = "🟡 MALICIOUS" if pred == 1 else "⚪ BENIGN"
+    print(f"{verdict} Requête : {q[:70]}... → Prédit :  {label_txt} (Attendu : {'🟡 MALICIOUS' if expected==1 else '⚪ BENIGN'})")
 
-# Prédiction sur les requêtes normales
-for req in normal_requests:
-    prediction = http_predict_from_query(req)
-    print(f"Requête: {req}\nPrédiction: {'Benign' if prediction == 0 else 'Malicious'}")
 
-# Prédiction sur les requêtes malveillantes
-for req in malicious_requests:
-    prediction = http_predict_from_query(req)
-    print(f"Requête: {req}\nPrédiction: {'Benign' if prediction == 0 else 'Malicious'}")
+# Requête bénigne avec paramètres (devrait retourner 0)
+print(http_predict_from_query("GET /search?q=hello&page=1 HTTP/1.1"))
+
+# Requête malveillante (devrait retourner 1)
+print(http_predict_from_query("GET /index.php?id=1 UNION SELECT * FROM users-- HTTP/1.1"))

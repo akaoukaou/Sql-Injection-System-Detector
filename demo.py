@@ -97,7 +97,6 @@ def predict_sql_route():
 
         # 4. Filtrer et ordonner les features à passer au modèle
         features_dict = dict(zip(all_feature_names, features_all))
-
         features_selected = [features_dict[name] for name in all_feature_names]
 
         # 5. Créer le DataFrame avec seulement les bonnes colonnes dans le bon ordre
@@ -150,16 +149,23 @@ def predict_http_route():
         features_all = extract_features_from_http(query)
         
         all_feature_names = [
-            "CONTENT_LENGTH_NORM", "SPECIAL_CHAR_COUNT_NORM", "PARAM_COUNT_NORM", 
-            "URL_SPECIAL_CHAR_COUNT_NORM", "URL_PARAM_COUNT_NORM", "URL_LENGTH_NORM",
-            "D_CONTENT_SCORE_NORM", "URL_SCORE_NORM", "GLOBAL_SCORE_NORM",
-            "NBKEYWORDSCONTENT_NORM", "NBKEYWORDSURL_NORM", "NBCOMMENTCONTENT_NORM", 
-            "NBCOMMENTURL_NORM", "RATIOSCORELONGUEURCONTENT_NORM", "RATIOSCORELONGUEURURL_NORM", 
-            "SCORECOMPLEXITECONTENT_NORM", "SCORECOMPLEXITEURL_NORM"
+            "METHODE_TYPE",
+            "CONTIENT_OR",
+            "CONTIENT_EQUAL",
+            "CONTIENT_QUOTE",
+            "CONTIENT_COMMENT",
+            "CONTIENT_UNION",
+            "CONTIENT_SELECT",
+            "CONTIENT_FUNCTION",
+            "LONGUEUR_NORM",
+            "SCORE_INJECTION_NORM",
+            "SCORE_COMPLEXITE_NORM",
+            "NB_SQL_WORDS_NORM",# "NB_SPECIAL_CHARS_NORM","NB_QUOTES_NORM",
+            "NB_EQUALS_NORM",
+            "RATIO_SCORE_LENGTH_NORM"
         ]
         
-        features_dict = dict(zip(all_feature_names, features_all))
-        features_selected = [features_dict[name] for name in all_feature_names]
+        features_selected = [features_all[name] for name in all_feature_names]
 
         df = pd.DataFrame([features_selected], columns=all_feature_names)
 
