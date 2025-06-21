@@ -84,7 +84,7 @@
             <div class="header-content">
                 <div class="header-title">
                     <h1>Analyse de Logs Http </h1>
-                    <p class="subtitle">Analysez vos requêtes SQL en temps réel avec l'intelligence artificielle 🚀</p>
+                    <p class="subtitle">Analysez vos requêtes HTTP en temps réel avec l'intelligence artificielle 🚀</p>
                 </div>
             </div>
         </header>
@@ -107,9 +107,10 @@
                     </label>
                     <div class="model-selector-container">
                         <select class="model-select" id="http-model-selector">
-                            <option value="randomforest" selected>Random Forest</option>
+                            <option value="mlp" selected>MLPClassifier</option>
                             <!-- <option value="svm">SVM</option> !-->
-                            <option value="gradientboosting">Gradient Boosting</option>
+                            <option value="xgboost">XGBoost</option>
+                            <option value="lightgbm">LightGBM</option>
                         </select>
                     </div>
                 </div>
@@ -274,11 +275,11 @@
             <div class="section-header">
                 <h2><i class='bx bx-history'></i> Historique des Analyses</h2>
                 <div class="section-actions">
-                    <button class="btn-secondary" id="export-btn">
+                    <button class="btn-secondary" id="export-btn" onclick="bientot()">
                         <i class='bx bx-download'></i>
                         Exporter
                     </button>
-                    <button class="btn-secondary" id="refresh-btn">
+                    <button class="btn-secondary" id="refresh-btn" onclick="bientot()">
                         <i class='bx bx-refresh'></i>
                         Actualiser
                     </button>
@@ -320,7 +321,7 @@
                             <td>#002</td>
                             <td class="query-cell">
                                 <div class="query-preview">
-                                    <code>GET /login.php?username=admin' OR '1'='1&pass=1234</code>
+                                    <code>GET /search.php?q=UNION+SELECT+1,2,3 HTTP/1.1</code>
                                 </div>
                             </td>
                             <td>
@@ -330,7 +331,7 @@
                                 </span>
                             </td>
                             <td>
-                                <span class="model-badge svm">SVM</span>
+                                <span class="model-badge svm">LightGBM</span>
                             </td>
                             <td>
                                 <time datetime="2024-01-15">15/01/2024 14:30</time>
@@ -354,7 +355,7 @@
                             <td>#001</td>
                             <td class="query-cell">
                                 <div class="query-preview">
-                                    <code>GET /index.php?user=admin&action=view</code>
+                                    <code>GET /index.html HTTP/1.1</code>
                                 </div>
                             </td>
                             <td>
@@ -364,7 +365,7 @@
                                 </span>
                             </td>
                             <td>
-                                <span class="model-badge rf">Random Forest</span>
+                                <span class="model-badge rf">MLPClassifier</span>
                             </td>
                             <td>
                                 <time datetime="2024-01-15">15/01/2024 14:25</time>

@@ -1,3 +1,46 @@
+// Main
+document.addEventListener('DOMContentLoaded', () => {
+    initSidebar();
+
+    // Initialiser les sélecteurs de modèles pour HTTP et SQL
+    initModelSelector('http');
+    initModelSelector('sql');
+
+    // Gestion des boutons d'analyse SQL et HTTP
+    document.getElementById('sql-predict-btn')?.addEventListener('click', () => analyzeQuery('sql'));
+    document.getElementById('http-predict-btn')?.addEventListener('click', () => analyzeQuery('http'));
+
+
+    // Charts (sur la page /analystic)
+    if (window.location.pathname.includes('/analystic')) initCharts();
+});
+
+
+//SideBar Initialisation
+function initSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const toggle = document.querySelector('.toggle');
+    
+    const savedState = localStorage.getItem('sidebarState');
+    
+    if (savedState === 'closed') {
+        sidebar.classList.add('close');
+    } else {
+        sidebar.classList.remove('close');
+        if (savedState === null) {
+            localStorage.setItem('sidebarState', 'open');
+        }
+    }
+    
+    if (toggle) {
+        toggle.addEventListener('click', () => {
+            sidebar.classList.toggle('close');
+            localStorage.setItem('sidebarState', 
+                sidebar.classList.contains('close') ? 'closed' : 'open');
+        });
+    }
+}
+
 // Helper function to set the content if the element exists
 function setIfExist(id, value) {
     const el = document.getElementById(id);
@@ -117,61 +160,13 @@ function escapeHtml(unsafe) {
         .replace(/'/g, "&#039;");
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Main
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-document.addEventListener('DOMContentLoaded', () => {
-    initSidebar();
-
-    // Initialiser les sélecteurs de modèles pour HTTP et SQL
-    initModelSelector('http');
-    initModelSelector('sql');
-
-    // Gestion des boutons d'analyse SQL et HTTP
-    document.getElementById('sql-predict-btn')?.addEventListener('click', () => analyzeQuery('sql'));
-    document.getElementById('http-predict-btn')?.addEventListener('click', () => analyzeQuery('http'));
-
-
-    // Charts (sur la page /analystic)
-    if (window.location.pathname.includes('/analystic')) initCharts();
-});
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//SideBar Initialisation
-function initSidebar() {
-    const sidebar = document.querySelector('.sidebar');
-    const toggle = document.querySelector('.toggle');
-    
-    const savedState = localStorage.getItem('sidebarState');
-    
-    if (savedState === 'closed') {
-        sidebar.classList.add('close');
-    } else {
-        sidebar.classList.remove('close');
-        if (savedState === null) {
-            localStorage.setItem('sidebarState', 'open');
-        }
-    }
-    
-    if (toggle) {
-        toggle.addEventListener('click', () => {
-            sidebar.classList.toggle('close');
-            localStorage.setItem('sidebarState', 
-                sidebar.classList.contains('close') ? 'closed' : 'open');
-        });
-    }
-}
 
 function addToHistory(query, result, type = 'sql') {
     const historyTable = document.querySelector('.history-table tbody');
     if (!historyTable) return;
 
     // Trouver le modèle sélectionné
-    const selectedModel = document.getElementById(`${type}-model-selector`)?.value || 'svm';  // Utiliser le type ici
+    const selectedModel = document.getElementById(`${type}-model-selector`)?.value || 'svm';
     let modelLabel = '';
     let modelClass = '';
 
@@ -188,16 +183,22 @@ function addToHistory(query, result, type = 'sql') {
         modelLabel = 'Logistic Regression';
         modelClass = 'lr';
         break;
-    case 'gradientboosting':
-        modelLabel = 'Gradient Boosting';
+    case 'mlp':
+        modelLabel = 'MLPClassifier';
+        modelClass = 'rf';
+        break;
+    case 'xgboost':
+        modelLabel = 'XGBoost';
+        modelClass = 'svm';
+        break;
+    case 'lightgbm':
+        modelLabel = 'LightGBM';
         modelClass = 'lr';
         break;
     default:
         modelLabel = selectedModel;
         modelClass = '';
-}
-
-
+    }
     // Générer un nouvel ID pour l'historique (ex: #003)
     let newId = 1;
     const rows = historyTable.querySelectorAll('tr');

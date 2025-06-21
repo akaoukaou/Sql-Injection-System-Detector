@@ -1,45 +1,46 @@
 import pandas as pd
-import time
 import os
+import re
+import json
+import time
 import pickle
-from sklearn.model_selection import GridSearchCV, train_test_split
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.svm import SVC
+import numpy as np
+from sklearn.model_selection import StratifiedKFold, GridSearchCV, train_test_split
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from urllib.parse import urlparse
-import numpy as np
-import json
-import re
+from sklearn.neural_network import MLPClassifier
+from xgboost import XGBClassifier
+from lightgbm import LGBMClassifier
+
 
 # Directories & files
 model_dir = "saved_models/all_http_models"
 http_stats_file = "saved_models/http_model_stats.json"
-MODELS = ["randomforest", "gradientboosting"]
+#MODELS = ['svm', 'mlp', 'xgboost', 'lightgbm']
+MODELS = ['mlp', 'xgboost', 'lightgbm']
 
 # Features list
 all_feature_names = [
-    "METHODE_TYPE",
-    "CONTIENT_OR",
-    "CONTIENT_EQUAL",
-    "CONTIENT_QUOTE",
-    "CONTIENT_COMMENT",
-    "CONTIENT_UNION",
-    "CONTIENT_SELECT",
-    "CONTIENT_FUNCTION",
-    "LONGUEUR_NORM",
-    "SCORE_INJECTION_NORM",
-    "SCORE_COMPLEXITE_NORM",
-    "NB_SQL_WORDS_NORM",# "NB_SPECIAL_CHARS_NORM","NB_QUOTES_NORM",
-    "NB_EQUALS_NORM",
-    "RATIO_SCORE_LENGTH_NORM"
+    "METHODE_TYPE", "CONTIENT_EQUAL", "CONTIENT_QUOTE",
+    "CONTIENT_COMMENT", "LONGUEUR_NORM", "SCORE_COMPLEXITE_NORM",
+    "NB_EQUALS_NORM", "RATIO_SCORE_LENGTH_NORM"
 ]
+"""
+    "METHODE_TYPE","CONTIENT_OR","CONTIENT_EQUAL","CONTIENT_QUOTE",
+    "CONTIENT_COMMENT","CONTIENT_UNION","CONTIENT_SELECT","CONTIENT_FUNCTION",
+    "LONGUEUR_NORM","SCORE_INJECTION_NORM","SCORE_COMPLEXITE_NORM",
+    "NB_SQL_WORDS_NORM",# "NB_SPECIAL_CHARS_NORM","NB_QUOTES_NORM",
+    "NB_EQUALS_NORM","RATIO_SCORE_LENGTH_NORM"
+"""
 
 # Charger et préparer les datasets
 print("🔄 Chargement des datasets HTTP...")
 
 try:
+    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
     df_train = pd.read_csv("dataset/a_ids_train.csv")
     df_valid = pd.read_csv("dataset/a_ids_valid.csv")
     df_test = pd.read_csv("dataset/a_ids_test.csv")
@@ -72,26 +73,69 @@ print(f"Test - Benign: {sum(y_test == 0)}, Malicious: {sum(y_test == 1)} ({sum(y
 
 # Définition des modèles et hyperparamètres
 models = {
-    'RandomForest': Pipeline([
+    # 'SVM': Pipeline([
+    #     ('scaler', StandardScaler()),
+    #     ('clf', SVC(probability=True, random_state=42))
+    # ]),
+    'MLP': Pipeline([
         ('scaler', StandardScaler()),
-        ('clf', RandomForestClassifier(random_state=42, n_jobs=-1))
+        ('clf', MLPClassifier(
+            random_state=42,
+            max_iter=300,
+            early_stopping=True,
+            alpha=0.0005,
+            learning_rate_init=0.001,
+            validation_fraction=0.15,
+            hidden_layer_sizes=(32, 16),
+            batch_size=128,
+            activation='relu',
+            solver='adam'
+        ))
     ]),
-    'GradientBoosting': Pipeline([
-        ('scaler', StandardScaler()),
-        ('clf', GradientBoostingClassifier(random_state=42))
+    'XGBoost': Pipeline([
+        ('clf', XGBClassifier(
+            eval_metric='logloss',
+            random_state=42,
+            enable_categorical=False,
+            scale_pos_weight=3,  # Pondere les cas positifs
+            max_depth=3,  # Limite la profondeur
+            learning_rate=0.05,  # Taux plus bas
+            subsample=0.8,  # Stochastic sampling
+            colsample_bytree=0.8,
+            reg_alpha=1,  # L1 regularization
+            reg_lambda=1  # L2 regularization
+        ))
+    ]),
+    'LightGBM': Pipeline([
+        #('scaler', StandardScaler()),
+        ('clf', LGBMClassifier(verbose=-1, random_state=42))
     ])
 }
 
 params = {
-    'RandomForest': {
-        'clf__n_estimators': [100, 200],
-        'clf__max_depth': [10, 20, None],
-        'clf__min_samples_split': [2, 5]
+    #'SVM': {'clf__C': [1, 10],'clf__kernel': ['rbf', 'linear']},
+    'MLP': {
+        'clf__hidden_layer_sizes': [(32, 16), (64, 32)],
+        'clf__alpha': [0.0001, 0.001, 0.005],
+        'clf__learning_rate_init': [0.001, 0.0005],
+        'clf__activation': ['relu'],
+        'clf__batch_size': [128, 256],
+        'clf__early_stopping': [True],
+        'clf__max_iter': [200]
     },
-    'GradientBoosting': {
-        'clf__n_estimators': [100, 200],
-        'clf__learning_rate': [0.05, 0.1],
-        'clf__max_depth': [3, 5, 7]
+    'XGBoost': {
+        'clf__n_estimators': [50, 100],
+        'clf__max_depth': [3, 5],
+        'clf__learning_rate': [0.01, 0.05],
+        'clf__subsample': [0.6, 0.8],
+        'clf__colsample_bytree': [0.6, 0.8],
+        'clf__reg_alpha': [0, 1],
+        'clf__reg_lambda': [0, 1]
+    },
+    'LightGBM': {
+        'clf__n_estimators': [100],
+        'clf__learning_rate': [0.1],
+        'clf__max_depth': [3, 5]
     }
 }
 
@@ -122,7 +166,14 @@ for model_key in models_to_train:
     model_name = [k for k in models.keys() if k.lower() == model_key][0]
     model = models[model_name]
     print(f"\n🔧 (Re)Entraînement du modèle: {model_name}")
-    grid_search = GridSearchCV(model, param_grid=params[model_name], cv=5, scoring='accuracy', n_jobs=-1, verbose=0)
+    grid_search = GridSearchCV(
+        model, 
+        param_grid=params[model_name], 
+        cv=5, 
+        scoring='f1',  # Optimiser pour F1-score
+        n_jobs=-1, 
+        verbose=1
+    )
     start_time = time.time()
     grid_search.fit(X_trainval, y_trainval)
 
@@ -236,50 +287,51 @@ except Exception as e:
 
 def extract_features_from_http(request):
     """
-    Optimized feature extraction for HTTP requests based on your dataset statistics
-    Returns features matching exactly with your model's expected schema
+    features = {
+        "METHODE_TYPE": 0.0,#"CONTIENT_OR": 0.0,"CONTIENT_EQUAL": 0.0,
+        "CONTIENT_QUOTE": 0.0,"CONTIENT_COMMENT": 0.0,#"CONTIENT_UNION": 0.0,
+        #"CONTIENT_SELECT": 0.0,#"CONTIENT_FUNCTION": 0.0,"LONGUEUR_NORM": 0.0,
+        "SCORE_INJECTION_NORM": 0.0,"SCORE_COMPLEXITE_NORM": 0.0,#"NB_SQL_WORDS_NORM": 0.0,
+        "NB_EQUALS_NORM": 0.0,"RATIO_SCORE_LENGTH_NORM": 0.0
+    }
     """
+
     features = {
         "METHODE_TYPE": 0.0,
-        "CONTIENT_OR": 0.0,
         "CONTIENT_EQUAL": 0.0,
         "CONTIENT_QUOTE": 0.0,
         "CONTIENT_COMMENT": 0.0,
-        "CONTIENT_UNION": 0.0,
-        "CONTIENT_SELECT": 0.0,
-        "CONTIENT_FUNCTION": 0.0,
         "LONGUEUR_NORM": 0.0,
         "SCORE_INJECTION_NORM": 0.0,
         "SCORE_COMPLEXITE_NORM": 0.0,
-        "NB_SQL_WORDS_NORM": 0.0, # "NB_SPECIAL_CHARS_NORM": 0.0, "NB_QUOTES_NORM": 0.0,
         "NB_EQUALS_NORM": 0.0,
         "RATIO_SCORE_LENGTH_NORM": 0.0
     }
 
     try:
-        # 1. Parse HTTP request
+        # 1. Séparer headers et body
         parts = request.split('\n\n', 1)
         headers = parts[0]
         body = parts[1] if len(parts) > 1 else ""
         first_line = headers.split('\n')[0] if headers else ""
 
-        # 2. METHODE_TYPE (POST=1, others=0)
-        features["METHODE_TYPE"] = 1.0 if first_line.strip().upper().startswith('POST') else 0.0
+        # 2. METHODE_TYPE : POST=1, autres=0
+        method_post = first_line.strip().upper().startswith('POST')
+        features["METHODE_TYPE"] = 1.0 if method_post else 0.0
 
-        # 3. Extract URL components
+        # 3. Extraire URL
         url = re.sub(r'^(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH|TRACE|CONNECT)\s+|\s+HTTP/.*', 
-                    '', first_line.strip(), flags=re.IGNORECASE)
+                     '', first_line.strip(), flags=re.IGNORECASE)
         parsed_url = urlparse(url)
         query = parsed_url.query
-        path = parsed_url.path
 
-        # Combine content for analysis
+        # 4. Contenu pour analyse : corps + query string
         content = body + " " + query
 
-        # 4. Content length normalization (based on 75th percentile)
-        features["LONGUEUR_NORM"] = min(len(content) / 1000, 1.0)  # Normalize to max 1000 chars
+        # 5. Normalisation longueur (max 1000 chars)
+        features["LONGUEUR_NORM"] = min(len(content) / 1000, 1.0)
 
-        # 5. SQL keyword detection (calibrated to dataset means)
+        # 6. Recherche mots clés SQL
         features["CONTIENT_OR"] = min(len(re.findall(r'\bOR\b', content, re.IGNORECASE)) / 5.0, 1.0)
         features["CONTIENT_EQUAL"] = min(len(re.findall(r'=', content)) / 10.0, 1.0)
         features["CONTIENT_QUOTE"] = min(len(re.findall(r'[\'"]', content)) / 5.0, 1.0)
@@ -288,47 +340,61 @@ def extract_features_from_http(request):
         features["CONTIENT_SELECT"] = min(len(re.findall(r'\bSELECT\b', content, re.IGNORECASE)) / 2.0, 1.0)
         features["CONTIENT_FUNCTION"] = min(len(re.findall(r'\b(EXEC|DECLARE|CALL|EVAL|CAST)\b', content, re.IGNORECASE)) / 3.0, 1.0)
 
-        # 6. Special character analysis
-
-
-        # 7. SQL word patterns (calibrated to malicious request averages)
+        # 7. Nombre de mots SQL
         sql_keywords = r'\b(SELECT|UNION|INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|EXEC)\b'
         features["NB_SQL_WORDS_NORM"] = min(len(re.findall(sql_keywords, content, re.IGNORECASE)) / 5.0, 1.0)
 
-        # 8. Injection score (using dataset statistics)
+        # 8. Score injection : compter motifs typiques
         injection_patterns = [
-            r'\bUNION\s+SELECT\b',
-            r'\bDROP\s+TABLE\b',
-            r'\bINSERT\s+INTO\b',
-            r'\bDELETE\s+FROM\b',
-            r'\bEXEC\s*\(',
-            r'WAITFOR\s+DELAY',
-            r'<\s*SCRIPT\b',
-            r'1\s*=\s*1',
-            r'\bSLEEP\s*\(',
-            r'\bXP_'
+            r'\bUNION\s+SELECT\b', r'\bDROP\s+TABLE\b', r'\bINSERT\s+INTO\b', r'\bDELETE\s+FROM\b',
+            r'\bEXEC\s*\(', r'WAITFOR\s+DELAY', r'<\s*SCRIPT\b', r'1\s*=\s*1', r'\bSLEEP\s*\(',
+            r'\bXP_', r'--\s', r';.*;', r'/\*.*\*/', r'<\?php', r'javascript:', r'\.\./',
+            r'\bOR\b.*\b1\s*=\s*1\b', r"'\s*--", r';.*--', r'<\s*script\b', r'\bWAITFOR\s+DELAY\b',
+            r'\bSLEEP\s*\(', r'\bBENCHMARK\s*\(', r'\bXP_', r'\bEXEC\b', r'\bUNION\b.*\bSELECT\b',
+            r'\bOR\b\s+\d+\s*=\s*\d+', r"'\s*(--|#|/\*|\*/)", r';.*--', r'<\s*script[^>]*>.*<\s*/\s*script\s*>',
+            r'\.\./(\.\./)*', r'union\s+select', r'exec(\s|\()+', r'waitfor\s+delay',
+            r'benchmark\s*\(', r'load_file\s*\(', r'into\s+(outfile|dumpfile)', r'xpath\s*\(', r'xmltype\s*\(',
         ]
         injection_score = sum(1 if re.search(p, content, re.IGNORECASE) else 0 for p in injection_patterns)
         features["SCORE_INJECTION_NORM"] = min(injection_score / 3.0, 1.0)
 
-        # 9. Complexity score (matching dataset distribution)
+        # 9. Score complexité
         complexity_factors = (
-            len(re.findall(r'[^\w\s]', content)) +  # Special chars
-            len(re.findall(r'\b(AND|OR|NOT)\b', content, re.IGNORECASE)) +  # Logic operators
-            len(re.findall(r'\(.*?\)', content))  # Parentheses
+            len(re.findall(r'[^\w\s]', content)) + 
+            len(re.findall(r'\b(AND|OR|NOT)\b', content, re.IGNORECASE)) + 
+            len(re.findall(r'\(.*?\)', content))
         )
         features["SCORE_COMPLEXITE_NORM"] = min(complexity_factors / 30.0, 1.0)
 
-        # 10. Ratio feature (aligned with dataset distribution)
+        # 10. Ratio score / longueur
         if len(content) > 0:
             features["RATIO_SCORE_LENGTH_NORM"] = min(
-                (features["SCORE_INJECTION_NORM"] + features["SCORE_COMPLEXITE_NORM"]) / 
-                (len(content) / 1000.0 + 0.001),  # Avoid division by zero
+                (features["SCORE_INJECTION_NORM"] + features["SCORE_COMPLEXITE_NORM"]) /
+                (len(content) / 1000.0 + 0.001),
                 1.0
             )
+
+        seuil_injection = 0.3
+        seuil_complexite = 0.3
+
+        benign_post_patterns = ['username=', 'password=', 'name=', 'age=', 'email=']
+
+        if features["METHODE_TYPE"] == 1.0:
+            content_lower = content.lower()
+            if any(p in content_lower for p in benign_post_patterns):
+                if (features["SCORE_INJECTION_NORM"] < seuil_injection + 0.2 and
+                    features["SCORE_COMPLEXITE_NORM"] < seuil_complexite + 0.2):
+                    features["METHODE_TYPE"] = 0.0
+            else:
+                if (features["SCORE_INJECTION_NORM"] < seuil_injection and
+                    features["SCORE_COMPLEXITE_NORM"] < seuil_complexite):
+                    features["METHODE_TYPE"] = 0.0
+
+    
     except Exception as e:
         print(f"⚠️ Feature extraction error: {str(e)}")
     
+    #print("✅ Features générées :", features.keys())
     return features
 
 # ---------------------------
@@ -352,6 +418,7 @@ def http_predict(query_features):
 
     # Faire la prédiction
     return int(best_model.predict(df)[0])
+
 # ---------------------------
 
 def http_predict_proba(query_features):
@@ -372,6 +439,7 @@ def http_predict_proba(query_features):
 
 def http_predict_from_query(query):
     features_all = extract_features_from_http(query)
+
     return http_predict(features_all)
 
 # ---------------------------

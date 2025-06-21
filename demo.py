@@ -148,28 +148,27 @@ def predict_http_route():
         # Extraire les caractéristiques pour la requête HTTP
         features_all = extract_features_from_http(query)
         
+        """
+        features = {
+            "METHODE_TYPE": 0.0,#"CONTIENT_OR": 0.0,"CONTIENT_EQUAL": 0.0,
+            "CONTIENT_QUOTE": 0.0,"CONTIENT_COMMENT": 0.0,#"CONTIENT_UNION": 0.0,
+            #"CONTIENT_SELECT": 0.0,#"CONTIENT_FUNCTION": 0.0,"LONGUEUR_NORM": 0.0,
+            "SCORE_INJECTION_NORM": 0.0,"SCORE_COMPLEXITE_NORM": 0.0,#"NB_SQL_WORDS_NORM": 0.0,
+            "NB_EQUALS_NORM": 0.0,"RATIO_SCORE_LENGTH_NORM": 0.0
+        }
+        """
+        
         all_feature_names = [
-            "METHODE_TYPE",
-            "CONTIENT_OR",
-            "CONTIENT_EQUAL",
-            "CONTIENT_QUOTE",
-            "CONTIENT_COMMENT",
-            "CONTIENT_UNION",
-            "CONTIENT_SELECT",
-            "CONTIENT_FUNCTION",
-            "LONGUEUR_NORM",
-            "SCORE_INJECTION_NORM",
-            "SCORE_COMPLEXITE_NORM",
-            "NB_SQL_WORDS_NORM",# "NB_SPECIAL_CHARS_NORM","NB_QUOTES_NORM",
-            "NB_EQUALS_NORM",
-            "RATIO_SCORE_LENGTH_NORM"
+            "METHODE_TYPE", "CONTIENT_EQUAL", "CONTIENT_QUOTE",
+            "CONTIENT_COMMENT", "LONGUEUR_NORM", "SCORE_COMPLEXITE_NORM",
+            "NB_EQUALS_NORM", "RATIO_SCORE_LENGTH_NORM"
         ]
         
         features_selected = [features_all[name] for name in all_feature_names]
 
         df = pd.DataFrame([features_selected], columns=all_feature_names)
 
-        # print("Features envoyées au modèle Flask :", features_selected)
+        #print("Features envoyées au modèle Flask :", features_selected)
 
         # Faire la prédiction
         prediction = loaded_model.predict(df)[0]
