@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from flask import Flask, render_template, request, jsonify
 from models.http_model import extract_features_from_http , best_model_name as http_best_model_name
+from models.netflow_model import extract_features_from_net , best_model_name as net_best_model_name
 from models.sql_model import extract_features_from_sql , best_model_name as sql_best_model_name
 
 app = Flask(__name__)
@@ -26,6 +27,10 @@ def index():
 def http_page():
     return render_template("http.html", http_best_model=http_best_model_name)
 
+@app.route("/netflow")
+def netflow_page(): 
+    return render_template("netflow.html", net_best_model=net_best_model_name)
+
 @app.route("/sql")
 def sql_page():
     return render_template("sql.html", sql_best_model=sql_best_model_name)
@@ -38,9 +43,14 @@ def analystic():
 def files():
     return render_template("files.html")
 
+@app.route("/settings")
+def settings_page():
+    return render_template("settings.html")
+
 @app.route("/login")
 def login():
     return render_template("login.html")
+
 
 @app.route("/model-info")
 def model_info():
@@ -49,6 +59,8 @@ def model_info():
 
     if model_type == "http":
         stats_file = "saved_models/http_model_stats.json"
+    elif model_type == "net":
+        stats_file = "saved_models/net_model_stats.json"
     elif model_type == "sql":
         stats_file = "saved_models/sql_model_stats.json"
     else:
@@ -64,6 +76,104 @@ def model_info():
         return jsonify(stats[model_name])
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/predict-http", methods=["POST"])
+def predict_http_route():
+    data = request.get_json()
+    query = data.get("query", "")
+    selected_model = data.get("model", "randomforest").lower()
+
+    model_path = f"saved_models/all_http_models/{selected_model}_model.pkl"
+
+    print(f"MODEL PATH UTILISÉ DANS FLASK : {model_path}")
+
+    # Charger le modèle choisi
+    try:
+        with open(model_path, "rb") as f:
+            loaded_model = pickle.load(f)
+    except Exception as e:
+        print(f"❌ Erreur de chargement du modèle : {e}")
+        return jsonify({"error": f"Erreur de chargement du modèle : {e}"}), 500
+
+    try:
+        # Extraire les caractéristiques pour la requête HTTP
+        features_all = extract_features_from_http(query)
+        all_feature_names = [
+            "METHODE_TYPE", "CONTIENT_EQUAL", "CONTIENT_QUOTE",
+            "CONTIENT_COMMENT", "LONGUEUR_NORM", "SCORE_COMPLEXITE_NORM",
+            "NB_EQUALS_NORM", "RATIO_SCORE_LENGTH_NORM"
+        ]
+        
+        features_selected = [features_all[name] for name in all_feature_names]
+        df = pd.DataFrame([features_selected], columns=all_feature_names)
+        #print("Features envoyées au modèle Flask :", features_selected)
+
+        # Faire la prédiction
+        prediction = loaded_model.predict(df)[0]
+        print(f"Résultat brut du modèle :", prediction)
+
+        try:
+            confidence = round(float(max(loaded_model.predict_proba(df)[0])), 3)
+        except:
+            confidence = None
+
+        return jsonify({
+            "result": int(prediction),
+            "model": selected_model,
+            "confidence": confidence
+        })
+    except Exception as e:
+        print(f"❌ Erreur d’analyse : {e}")
+        return jsonify({"error": f"Erreur d’analyse : {e}"}), 500
+
+
+@app.route("/predict-net", methods=["POST"])
+def predict_net_route():
+    data = request.get_json()
+    query = data.get("query", "")
+    selected_model = data.get("model", "randomforest").lower()
+    threshold = float(data.get("threshold", 0.5))
+
+    model_path = f"saved_models/all_net_models/{selected_model}_model.pkl"
+    print(f"MODEL PATH UTILISÉ DANS FLASK : {model_path}")
+
+    try:
+        with open(model_path, "rb") as f:
+            loaded_model = pickle.load(f)
+    except Exception as e:
+        print(f"❌ Erreur de chargement du modèle : {e}")
+        return jsonify({"error": f"Erreur de chargement du modèle : {e}"}), 500
+
+    try:
+        features_all = extract_features_from_net(query)
+        all_feature_names = [
+            "BYTE_RATE_LOGNORM", "PKT_RATE_LOGNORM", "DURATION_NORM", "AVG_PACKET_SIZE_NORM"
+        ]
+        features_selected = [features_all[name] for name in all_feature_names]
+        print(f"Features envoyées au modèle Flask : {features_selected}")
+        df = pd.DataFrame([features_selected], columns=all_feature_names)
+
+        prob = float(loaded_model.predict_proba(df)[0][1])
+
+        # Même logique que ton terminal
+        if prob < 0.05:
+            prediction = 1  # Malveillant
+        else:
+            prediction = 0  # Bénin
+
+        print(f"Prediction: {prediction}, Probability: {prob}")
+
+        return jsonify({
+            "result": prediction,
+            "model": selected_model,
+            "confidence": round(prob, 4),
+            "threshold_used": threshold
+        })
+
+    except Exception as e:
+        print(f"❌ Erreur d’analyse : {e}")
+        return jsonify({"error": f"Erreur d’analyse : {e}"}), 500
 
 
 @app.route("/predict-sql", methods=["POST"])
@@ -126,70 +236,8 @@ def predict_sql_route():
         return jsonify({"error": f"Erreur d’analyse : {e}"}), 500
 
 
-@app.route("/predict-http", methods=["POST"])
-def predict_http_route():
-    data = request.get_json()
-    query = data.get("query", "")
-    selected_model = data.get("model", "randomforest").lower()
-
-    model_path = f"saved_models/all_http_models/{selected_model}_model.pkl"
-
-    print(f"MODEL PATH UTILISÉ DANS FLASK : {model_path}")
-
-    # Charger le modèle choisi
-    try:
-        with open(model_path, "rb") as f:
-            loaded_model = pickle.load(f)
-    except Exception as e:
-        print(f"❌ Erreur de chargement du modèle : {e}")
-        return jsonify({"error": f"Erreur de chargement du modèle : {e}"}), 500
-
-    try:
-        # Extraire les caractéristiques pour la requête HTTP
-        features_all = extract_features_from_http(query)
-        
-        """
-        features = {
-            "METHODE_TYPE": 0.0,#"CONTIENT_OR": 0.0,"CONTIENT_EQUAL": 0.0,
-            "CONTIENT_QUOTE": 0.0,"CONTIENT_COMMENT": 0.0,#"CONTIENT_UNION": 0.0,
-            #"CONTIENT_SELECT": 0.0,#"CONTIENT_FUNCTION": 0.0,"LONGUEUR_NORM": 0.0,
-            "SCORE_INJECTION_NORM": 0.0,"SCORE_COMPLEXITE_NORM": 0.0,#"NB_SQL_WORDS_NORM": 0.0,
-            "NB_EQUALS_NORM": 0.0,"RATIO_SCORE_LENGTH_NORM": 0.0
-        }
-        """
-        
-        all_feature_names = [
-            "METHODE_TYPE", "CONTIENT_EQUAL", "CONTIENT_QUOTE",
-            "CONTIENT_COMMENT", "LONGUEUR_NORM", "SCORE_COMPLEXITE_NORM",
-            "NB_EQUALS_NORM", "RATIO_SCORE_LENGTH_NORM"
-        ]
-        
-        features_selected = [features_all[name] for name in all_feature_names]
-
-        df = pd.DataFrame([features_selected], columns=all_feature_names)
-
-        #print("Features envoyées au modèle Flask :", features_selected)
-
-        # Faire la prédiction
-        prediction = loaded_model.predict(df)[0]
-        print(f"Résultat brut du modèle :", prediction)
-
-        try:
-            confidence = round(float(max(loaded_model.predict_proba(df)[0])), 3)
-        except:
-            confidence = None
-
-        return jsonify({
-            "result": int(prediction),
-            "model": selected_model,
-            "confidence": confidence
-        })
-    except Exception as e:
-        print(f"❌ Erreur d’analyse : {e}")
-        return jsonify({"error": f"Erreur d’analyse : {e}"}), 500
-
-
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
 
+#Fin

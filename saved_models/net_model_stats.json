@@ -1,0 +1,47 @@
+{
+    "randomforest": {
+        "train_accuracy": 99.86,
+        "val_accuracy": 99.77,
+        "test_accuracy": 99.81,
+        "precision": 99.77,
+        "recall": 99.85,
+        "f1_score": 99.81,
+        "cv_score": 99.77,
+        "training_time": 477.35,
+        "best_params": {
+            "clf__max_depth": 20,
+            "clf__min_samples_split": 10,
+            "clf__n_estimators": 200
+        }
+    },
+    "xgboost": {
+        "train_accuracy": 99.85,
+        "val_accuracy": 99.75,
+        "test_accuracy": 99.8,
+        "precision": 99.74,
+        "recall": 99.85,
+        "f1_score": 99.8,
+        "cv_score": 99.75,
+        "training_time": 79.72,
+        "best_params": {
+            "clf__learning_rate": 0.1,
+            "clf__max_depth": 10,
+            "clf__n_estimators": 300
+        }
+    },
+    "gradientboosting": {
+        "train_accuracy": 99.85,
+        "val_accuracy": 99.76,
+        "test_accuracy": 99.78,
+        "precision": 99.71,
+        "recall": 99.85,
+        "f1_score": 99.78,
+        "cv_score": 99.76,
+        "training_time": 1901.57,
+        "best_params": {
+            "clf__learning_rate": 0.05,
+            "clf__max_depth": 6,
+            "clf__n_estimators": 300
+        }
+    }
+}

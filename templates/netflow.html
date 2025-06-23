@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetFlow Détection</title>
+    <link rel="stylesheet" href="/static/sql.css">
+    <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!--Sidebar Section -->
+    <nav class="sidebar">
+        <header>
+            <div class="image-text">
+                <span class="image">
+                    <img src="/static/images/logo.png" alt="Logo SQL Shield">
+                </span>
+                <div class="text logo-text">
+                    <span class="name">SQL Shield</span>
+                    <span class="profession">Security Analyzer</span>
+                </div>
+            </div>
+            <i class='bx bx-chevron-right toggle'></i>
+        </header>
+
+        <div class="menu-bar">
+            <div class="menu">
+                <ul class="menu-links">
+                    <li class="nav-link">
+                        <a href="/">
+                            <i class='bx bx-home-alt icon'></i>
+                            <span class="text nav-text">Accueil</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="/http">
+                            <i class='bx bx-file-find icon'></i>
+                            <span class="text nav-text">Logs HTTP</span>
+                        </a>
+                    </li>
+                    <li class="nav-link active">
+                        <a href="/netflow">
+                            <i class='bx bx-network-chart icon'></i>
+                            <span class="text nav-text">NetFlow</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="/sql">
+                            <i class='bx bx-shield-alt icon'></i>
+                            <span class="text nav-text">Logs SQL</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="/analystic">
+                            <i class='bx bx-bar-chart-alt-2 icon'></i>
+                            <span class="text nav-text">Analytiques</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="/files">
+                            <i class='bx bx-data icon'></i>
+                            <span class="text nav-text">Sources</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bottom-content">
+                <li class="">
+                    <a href="/settings">
+                        <i class='bx bx-cog icon'></i>
+                        <span class="text nav-text">Paramètres</span>
+                    </a>
+                </li>
+                <li class="">
+                    <a href="/login">
+                        <i class='bx bx-log-out icon'></i>
+                        <span class="text nav-text">Déconnexion</span>
+                    </a>
+                </li>
+            </div>
+        </div>
+    </nav>
+
+    <main class="sql-content">
+        <!-- Header Section -->
+        <header class="page-header">
+            <div class="header-content">
+                <div class="header-title">
+                    <h1>Analyse de Logs NetFlow </h1>
+                    <p class="subtitle">Analysez vos requêtes NetFlow en temps réel avec l'intelligence artificielle 🚀</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Analysis Panel -->
+        <section class="analysis-panel">
+            <div class="panel-header">
+                <h2><i class='bx bx-brain'></i>Configuration du Modèle</h2>
+                <div>
+                    <span class="best-label">The Best ⭐</span>
+                    <span class="best-label">{{ net_best_model }}</span>
+                </div>
+            </div>
+
+            <div class="model-configuration">
+                <div class="model-selector-wrapper">
+                    <label for="model-selector">
+                        <i class='bx bx-microchip'></i>
+                        Algorithme de détection
+                    </label>
+                    <div class="model-selector-container">
+                        <select class="model-select" id="net-model-selector">
+                            <option value="randomforest" selected>Random Forest</option>
+                            <option value="xgboost">XGBoost</option>
+                            <option value="gradientboosting">GradientBoosting</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="model-metrics">
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <i class='bx bx-bar-chart'></i>
+                            <span>Test Accuracy</span>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="net-stat-test-accuracy">--</div>
+                            <div class="metric-unit">%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <i class='bx bx-bullseye'></i>
+                            <span>Precision</span>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="net-stat-precision">--</div>
+                            <div class="metric-unit">%</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <i class='bx bx-revision'></i>
+                            <span>Recall</span>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="net-stat-recall">--</div>
+                            <div class="metric-unit">%</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <i class='bx bx-pulse'></i>
+                            <span>F1-score</span>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="net-stat-f1">--</div>
+                            <div class="metric-unit">%</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <i class='bx bx-trending-up'></i>
+                            <span>Précision Entraînement</span>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="net-stat-train">--</div>
+                            <div class="metric-unit">%</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <i class='bx bx-target-lock'></i>
+                            <span>Précision Validation</span>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="net-stat-val">--</div>
+                            <div class="metric-unit">%</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <i class='bx bx-time'></i>
+                            <span>Temps d'entraînement</span>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="net-stat-time">--</div>
+                            <div class="metric-unit">s</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="input-section">
+                <div class="input-header">
+                    <label for="net-query">
+                        <i class='bx bx-code-curly'></i> 
+                        Requête à analyser
+                    </label>
+                    <div class="input-actions">
+                        <button type="button" class="btn-secondary" id="clear-btn">
+                            <i class='bx bx-trash'></i>
+                            Effacer
+                        </button>
+                    </div>
+                </div>
+                <div class="textarea-wrapper">
+                    <textarea id="net-query" placeholder="Entrez votre requête NetFlow ici..." spellcheck="false"></textarea>
+                </div>
+                
+            </div>
+
+            <div class="action-section">
+                <button id="net-predict-btn" class="btn-primary">
+                    <i class='bx bx-search-alt'></i>
+                    <span>Analyser la Requête</span>
+                    <div class="btn-loading">
+                        <i class='bx bx-loader-alt bx-spin'></i>
+                    </div>
+                </button>
+                <div class="analysis-info">
+                    <small>
+                        <i class='bx bx-info-circle'></i>
+                        L'analyse se fait en temps réel et de manière sécurisée
+                    </small>
+                </div>
+            </div>
+
+            <div id="net-result-container" class="result-container">
+                <!-- Résultat Danger -->
+                <div class="result-card danger" id="net-result-danger">
+                    <div class="result-icon">
+                        <i class='bx bx-error-circle'></i>
+                    </div>
+                    <div class="result-content">
+                        <div class="result-header">
+                            <h3>Injection Détectée!</h3>
+                        </div>
+                        <div class="result-details">
+                            <div class="attack-info">
+                                <span class="attack-solution">
+                                    <i class='bx bx-shield'></i> Solution : 
+                                    <strong>(en cours de dev!)</strong>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Résultat Safe -->
+                <div class="result-card safe" id="net-result-safe">
+                    <div class="result-icon">
+                        <i class='bx bx-check-circle'></i>
+                    </div>
+                    <div class="result-content">
+                        <div class="result-header">
+                            <h3>Aucune Menace Détectée</h3>
+                        </div>
+                        <div class="result-details">
+                            <p>La requête analysée semble sécurisée et ne présente aucun pattern d'injection connu.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- History Section -->
+        <section class="history-section">
+            <div class="section-header">
+                <h2><i class='bx bx-history'></i> Historique des Analyses</h2>
+                <div class="section-actions">
+                    <button class="btn-secondary" id="export-btn" onclick="bientot()">
+                        <i class='bx bx-download'></i>
+                        Exporter
+                    </button>
+                    <button class="btn-secondary" id="refresh-btn" onclick="bientot()">
+                        <i class='bx bx-refresh'></i>
+                        Actualiser
+                    </button>
+                </div>
+            </div>
+
+            <div class="history-filters">
+                <div class="filter-group">
+                    <select class="filter-select">
+                        <option value="all">Tous les résultats</option>
+                        <option value="danger">Menaces détectées</option>
+                        <option value="safe">Requêtes sécurisées</option>
+                    </select>
+                </div>
+                <div class="search-group">
+                    <i class='bx bx-search'></i>
+                    <input type="text" placeholder="Rechercher dans les requêtes..." class="search-input">
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" class="select-all">
+                            </th>
+                            <th>ID</th>
+                            <th>Requête</th>
+                            <th>Résultat</th>
+                            <th>Modèle</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>#002</td>
+                            <td class="query-cell">
+                                <div class="query-preview">
+                                    <code>SELECT * FROM us WHERE id=1 AND SLEEP(2);</code>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="status-badge danger">
+                                    <i class='bx bx-error-circle'></i>
+                                    Menace
+                                </span>
+                            </td>
+                            <td>
+                                <span class="model-badge svm">XGBoost</span>
+                            </td>
+                            <td>
+                                <time datetime="2024-01-15">15/01/2024 14:30</time>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-icon" title="Copier la requête" onclick="bientot()">
+                                        <i class='bx bx-copy'></i>
+                                    </button>
+                                    <button class="btn-icon" title="Réanalyser" onclick="bientot()">
+                                        <i class='bx bx-refresh'></i>
+                                    </button>
+                                    <button class="btn-icon danger" title="Supprimer" onclick="bientot()">
+                                        <i class='bx bx-trash'></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>#001</td>
+                            <td class="query-cell">
+                                <div class="query-preview">
+                                    <code>SELECT * FROM users WHERE id = 1;</code>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="status-badge safe">
+                                    <i class='bx bx-check-circle'></i>
+                                    Sécurisée
+                                </span>
+                            </td>
+                            <td>
+                                <span class="model-badge rf">Random Forest</span>
+                            </td>
+                            <td>
+                                <time datetime="2024-01-15">15/01/2024 14:25</time>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-icon" title="Copier la requête" onclick="bientot()">
+                                        <i class='bx bx-copy'></i>
+                                    </button>
+                                    <button class="btn-icon" title="Réanalyser" onclick="bientot()">
+                                        <i class='bx bx-refresh'></i>
+                                    </button>
+                                    <button class="btn-icon danger" title="Supprimer" onclick="bientot()">
+                                        <i class='bx bx-trash'></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-pagination">
+                <div class="pagination-info">
+                    Affichage 1-2 sur 2 résultats
+                </div>
+                <div class="pagination-controls">
+                    <button class="btn-pagination" disabled>
+                        <i class='bx bx-chevron-left'></i>
+                    </button>
+                    <button class="btn-pagination active">1</button>
+                    <button class="btn-pagination" disabled>
+                        <i class='bx bx-chevron-right'></i>
+                    </button>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <script src="static/script.js"></script>
+</body>
+</html>

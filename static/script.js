@@ -4,11 +4,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialiser les sélecteurs de modèles pour HTTP et SQL
     initModelSelector('http');
+    initModelSelector('net');
     initModelSelector('sql');
 
     // Gestion des boutons d'analyse SQL et HTTP
-    document.getElementById('sql-predict-btn')?.addEventListener('click', () => analyzeQuery('sql'));
     document.getElementById('http-predict-btn')?.addEventListener('click', () => analyzeQuery('http'));
+    document.getElementById('net-predict-btn')?.addEventListener('click', () => analyzeQuery('net'));
+    document.getElementById('sql-predict-btn')?.addEventListener('click', () => analyzeQuery('sql'));
 
 
     // Charts (sur la page /analystic)
@@ -195,6 +197,10 @@ function addToHistory(query, result, type = 'sql') {
         modelLabel = 'LightGBM';
         modelClass = 'lr';
         break;
+    case 'gradientboosting':
+        modelLabel = 'GradientBoosting';
+        modelClass = 'lr';
+        break;
     default:
         modelLabel = selectedModel;
         modelClass = '';
@@ -224,7 +230,7 @@ function addToHistory(query, result, type = 'sql') {
     // Actions boutons
     const actionButtons = `
         <div class="action-buttons">
-            <button class="btn-icon" title="Voir détails"><i class='bx bx-show'></i></button>
+            <button class="btn-icon" title="Copier la requête"><i class='bx bx-copy'></i></button>
             <button class="btn-icon" title="Réanalyser"><i class='bx bx-refresh'></i></button>
             <button class="btn-icon danger" title="Supprimer"><i class='bx bx-trash'></i></button>
         </div>

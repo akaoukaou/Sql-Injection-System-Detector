@@ -286,15 +286,6 @@ except Exception as e:
 # ---------------------------
 
 def extract_features_from_http(request):
-    """
-    features = {
-        "METHODE_TYPE": 0.0,#"CONTIENT_OR": 0.0,"CONTIENT_EQUAL": 0.0,
-        "CONTIENT_QUOTE": 0.0,"CONTIENT_COMMENT": 0.0,#"CONTIENT_UNION": 0.0,
-        #"CONTIENT_SELECT": 0.0,#"CONTIENT_FUNCTION": 0.0,"LONGUEUR_NORM": 0.0,
-        "SCORE_INJECTION_NORM": 0.0,"SCORE_COMPLEXITE_NORM": 0.0,#"NB_SQL_WORDS_NORM": 0.0,
-        "NB_EQUALS_NORM": 0.0,"RATIO_SCORE_LENGTH_NORM": 0.0
-    }
-    """
 
     features = {
         "METHODE_TYPE": 0.0,
@@ -397,6 +388,7 @@ def extract_features_from_http(request):
     #print("✅ Features générées :", features.keys())
     return features
 
+
 # ---------------------------
 
 def http_predict(query_features):
@@ -445,7 +437,7 @@ def http_predict_from_query(query):
 # ---------------------------
 # Exemple de requêtes HTTP à tester
 # ---------------------------
-
+"""
 test_queries = [
     # Requêtes normales (benignes)
     ("GET /index.html HTTP/1.1", 0),
@@ -488,3 +480,4 @@ print(http_predict_from_query("GET /search?q=hello&page=1 HTTP/1.1"))
 
 # Requête malveillante (devrait retourner 1)
 print(http_predict_from_query("GET /index.php?id=1 UNION SELECT * FROM users-- HTTP/1.1"))
+"""
